@@ -131,10 +131,23 @@ public:
             m->enabledLazyLoad = val;
         });
     }
+    void setAutoCastFP16(bool val) {
+        traverse([val](Module *m) {
+            m->enabledAutoCastFP16 = val;
+        });
+    }
 
 protected:
     virtual void loadParam(std::string key, Tensor &dst, Tensor src) {
-        dst.copy_(src);
+        static const std::set<Tensor::ScalarType> whitelist = {
+            Tensor::FP16,
+            Tensor::BF16,
+        };
+        if (enabledAutoCastFP16 && dst.scalar_type() != src.scalar_type() && whitelist.contains(dst.scalar_type()) && whitelist.contains(src.scalar_type())) {
+            copyWithCast(dst, src);
+        } else {
+            dst.copy_(src);
+        }
     }
 
     struct ChildrenRegisterHelper {
@@ -174,7 +187,7 @@ protected:
     }
 
     void debug(std::string name, Tensor tensor) {
-        if (DebugContext::ctxs.empty()) {
+        if (DebugContext::ctxs.empty() || !tensor.valid()) {
             return;
         }
         std::string prefix = getFullName();
@@ -187,6 +200,9 @@ protected:
         }
     }
 
+private:
+    void copyWithCast(Tensor dst, Tensor src);
+
 public:
     Module *parent = nullptr;
     std::string name = "";
@@ -194,6 +210,7 @@ public:
     std::map<std::string, Param> params;
 
     bool enabledLazyLoad = false;
+    bool enabledAutoCastFP16 = true;
 };
 
 struct LayerOffloadHelper {

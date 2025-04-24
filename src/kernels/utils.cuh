@@ -1,15 +1,35 @@
 // Adated from FasterTransformer, https://github.com/NVIDIA/FasterTransformer/blob/release/v5.3_tag/src/fastertransformer/kernels/decoder_masked_multihead_attention/decoder_masked_multihead_attention_template.hpp
 #pragma once
 
-#include <assert.h>
-#include <stdint.h>
-#include <float.h>
+#include <cassert>
+#include <cstdint>
+#include <cfloat>
 #include <type_traits>
+
+#include <cstdio>
 
 #include <cuda_fp16.h>
 
 #ifdef ENABLE_BF16
 #include <cuda_bf16.h>
+#endif
+
+__device__ __forceinline__ 
+static void trap_unsupported_arch() {
+    if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0) {
+        printf("This kernel is not supported on your GPU\n");
+    }
+    __syncthreads();
+    __nanosleep(1000000);
+    __trap();
+}
+
+#if defined(ENABLE_BF16) && defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 800
+__device__ __forceinline__
+static __nv_bfloat162 __hfma2(const __nv_bfloat162 a, const __nv_bfloat162 b, const __nv_bfloat162 c) {
+    trap_unsupported_arch();
+    return __nv_bfloat162(0.0f, 0.0f);
+}
 #endif
 
 template<typename T> struct num_elems;
@@ -409,6 +429,9 @@ __device__ inline __nv_bfloat16 cuda_max(__nv_bfloat162 val)
 {
 #if (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 800))
     return __hmax(val.x, val.y);
+#else
+    assert(false);
+    return 0;
 #endif
 }
 #endif

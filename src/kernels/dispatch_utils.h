@@ -15,6 +15,20 @@ inline auto dispatchFloat(Tensor::ScalarType scalarType, F &&func) {
         return func.template operator()<float>();
     default:
         assert(false);
+        throw std::invalid_argument("scalarType is not a floating type");
+    }
+}
+
+template<typename F>
+inline auto dispatchFloat16(Tensor::ScalarType scalarType, F &&func) {
+    switch (scalarType) {
+    case Tensor::BF16:
+        return func.template operator()<__nv_bfloat16>();
+    case Tensor::FP16:
+        return func.template operator()<half>();
+    default:
+        assert(false);
+        throw std::invalid_argument("scalarType is not a float16 type");
     }
 }
 

@@ -448,6 +448,7 @@ public:
     // out : [M / BLOCK_M, BLOCK_M, N / BLOCK_N, BLOCK_N]
     template<typename Epilogue>
     struct gemm_w8a8_kernel {
+        static constexpr int MIN_ARCH = std::is_same_v<half_t, __nv_bfloat16> ? 800 : 750;
         __device__
         void operator()(
             const packed_act_t *act,

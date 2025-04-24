@@ -6,6 +6,11 @@
 #include "Linear.h"
 #include "layernorm.h"
 
+enum class AttentionImpl {
+    FlashAttention2 = 0,
+    NunchakuFP16,
+};
+
 class AdaLayerNormZeroSingle : public Module {
 public:
     static constexpr bool USE_4BIT = true;
@@ -56,8 +61,9 @@ private:
 class Attention : public Module {
 public:
     static constexpr int POOL_SIZE = 128;
-    
+
     Attention(int num_heads, int dim_head, Device device);
+    Tensor forward(Tensor qkv);
     Tensor forward(Tensor qkv, Tensor pool_qkv, float sparsityRatio);
 
     static void setForceFP16(Module *module, bool value);
@@ -86,6 +92,8 @@ public:
     const int num_heads;
     const int mlp_hidden_dim;
 
+    AttentionImpl attnImpl = AttentionImpl::FlashAttention2;
+
 private:
     AdaLayerNormZeroSingle norm;
     GEMM mlp_fc1;
@@ -110,6 +118,8 @@ public:
     const int num_heads;
     const bool context_pre_only;
 
+    AttentionImpl attnImpl = AttentionImpl::FlashAttention2;
+
 private:
     AdaLayerNormZero norm1;
     AdaLayerNormZero norm1_context;
@@ -129,9 +139,30 @@ private:
 class FluxModel : public Module {
 public:
     FluxModel(bool use_fp4, bool offload, Tensor::ScalarType dtype, Device device);
-    Tensor forward(Tensor hidden_states, Tensor encoder_hidden_states, Tensor temb, Tensor rotary_emb_img, Tensor rotary_emb_context, Tensor rotary_emb_single);
+    Tensor forward(
+        Tensor hidden_states,
+        Tensor encoder_hidden_states,
+        Tensor temb,
+        Tensor rotary_emb_img,
+        Tensor rotary_emb_context,
+        Tensor rotary_emb_single,
+        Tensor controlnet_block_samples,
+        Tensor controlnet_single_block_samples,
+        bool skip_first_layer = false);
+    std::tuple<Tensor, Tensor> forward_layer(
+        size_t layer,
+        Tensor hidden_states,
+        Tensor encoder_hidden_states,
+        Tensor temb,
+        Tensor rotary_emb_img,
+        Tensor rotary_emb_context,
+        Tensor controlnet_block_samples,
+        Tensor controlnet_single_block_samples);
+    void setAttentionImpl(AttentionImpl impl);
 
 public:
+    const Tensor::ScalarType dtype;
+
     std::vector<std::unique_ptr<JointTransformerBlock>> transformer_blocks;
     std::vector<std::unique_ptr<FluxSingleTransformerBlock>> single_transformer_blocks;
 

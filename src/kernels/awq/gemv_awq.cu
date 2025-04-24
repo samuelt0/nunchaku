@@ -112,6 +112,13 @@ __global__ void gemv_kernel(
   const half_t* inputs, const uint32_t* weight, const half_t* scales, const half_t* zeros, half_t* outputs, 
   const int IC, const int OC)
 {
+    
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 800
+    if constexpr(std::is_same_v<half_t, __nv_bfloat16>) {
+        trap_unsupported_arch();
+        return;
+    }
+#endif
     using half2_t = typename packed_as<half_t, 2>::type;
     using accum_t = float;
     using accum2_t = typename packed_as<accum_t, 2>::type;
@@ -273,46 +280,45 @@ Tensor gemv_awq(
     int k,
     int group_size)
 {
-    using half_t = __nv_bfloat16;
-    // using half_t = half;
+    return dispatchFloat16(_scaling_factors.scalar_type(), [&]<typename half_t>() {
+        assert(isTypeMatch<half_t>(_in_feats.dtype()));
 
-    assert(isTypeMatch<half_t>(_in_feats.dtype()));
+        auto output_shape = _in_feats.shape.dataExtent;
+        output_shape.back() = n;
 
-    auto output_shape = _in_feats.shape.dataExtent;
-    output_shape.back() = n;
+        auto in_feats = reinterpret_cast<half_t*>(_in_feats.data_ptr<half_t>());
+        auto kernel = reinterpret_cast<uint32_t*>(_kernel.data_ptr());
+        auto zeros = reinterpret_cast<half_t*>(_zeros.data_ptr<half_t>());
+        auto scaling_factors = reinterpret_cast<half_t*>(_scaling_factors.data_ptr<half_t>());
 
-    auto in_feats = reinterpret_cast<half_t*>(_in_feats.data_ptr<half_t>());
-    auto kernel = reinterpret_cast<uint32_t*>(_kernel.data_ptr());
-    auto zeros = reinterpret_cast<half_t*>(_zeros.data_ptr<half_t>());
-    auto scaling_factors = reinterpret_cast<half_t*>(_scaling_factors.data_ptr<half_t>());
+        Tensor _out_feats = Tensor::allocate(output_shape, _in_feats.dtype(), _in_feats.device());
+        half_t * out_feats = reinterpret_cast<half_t *>(_out_feats.data_ptr());
+        
+        static constexpr int N_PER_BLOCK = 2;
+        static constexpr int K_INTERLEAVE = 4;
+        static constexpr int BLOCK_SIZE = 256;
 
-    Tensor _out_feats = Tensor::allocate(output_shape, _in_feats.dtype(), _in_feats.device());
-    half_t * out_feats = reinterpret_cast<half_t *>(_out_feats.data_ptr());
-    
-    static constexpr int N_PER_BLOCK = 2;
-    static constexpr int K_INTERLEAVE = 4;
-    static constexpr int BLOCK_SIZE = 256;
+        dim3 num_blocks(n / N_PER_BLOCK / K_INTERLEAVE);
+        dim3 num_threads(BLOCK_SIZE);
 
-    dim3 num_blocks(n / N_PER_BLOCK / K_INTERLEAVE);
-    dim3 num_threads(BLOCK_SIZE);
+        constexpr int GROUP_SIZE = 64;
 
-    constexpr int GROUP_SIZE = 64;
+        assert(m > 0 && m <= 8);
+        assert(group_size == GROUP_SIZE);
 
-    assert(m > 0 && m < 8);
-    assert(group_size == GROUP_SIZE);
+        dispatchVal(m, std::make_integer_sequence<int, 9>(), [&]<int M>() {
+            if constexpr (M == 0) {
+                assert(false);
+                return;
+            }
+            if constexpr (M > 0) {
+                gemv_kernel<half_t, N_PER_BLOCK, M, BLOCK_SIZE, GROUP_SIZE><<<num_blocks, num_threads, 0, getCurrentCUDAStream()>>>(
+                    in_feats, kernel, scaling_factors, zeros, out_feats, k, n
+                );
+                checkCUDA(cudaGetLastError());
+            }
+        });
 
-    dispatchVal(m, std::make_integer_sequence<int, 8>(), [&]<int M>() {
-        if constexpr (M == 0) {
-            assert(false);
-            return;
-        }
-        if constexpr (M > 0) {
-            gemv_kernel<half_t, N_PER_BLOCK, M, BLOCK_SIZE, GROUP_SIZE><<<num_blocks, num_threads, 0, getCurrentCUDAStream()>>>(
-                in_feats, kernel, scaling_factors, zeros, out_feats, k, n
-            );
-            checkCUDA(cudaGetLastError());
-        }
+        return _out_feats;
     });
-    
-    return _out_feats;
 }

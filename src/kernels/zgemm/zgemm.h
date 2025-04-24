@@ -30,7 +30,11 @@ void gemm_w4a4(
         bool fuse_silu,
         bool fp4,
         float alpha,
-        Tensor wcscales
+        Tensor wcscales,
+        Tensor out_q,          // packed attention [B, H, M, D]
+        Tensor out_k,          // packed attention [B, H, M, D]
+        Tensor out_v,          // packed attention [B, H, M, D]
+        int attn_tokens
 );
 void linearattn_vk_mul_q(Tensor q, Tensor vk);
 
@@ -56,5 +60,20 @@ void quantize_w8a8_act(Tensor input, Tensor output, Tensor oscales, bool fuse_gl
 //     Tensor ascales,  // [1, M]
 //     Tensor wscales   // [1, N]
 // );
+
+void attention_fp16(
+    Tensor q,   // packed [Batch, Head, TokensQ, HEAD_DIM]
+    Tensor k,   // packed [Batch, Head, TokensKV, HEAD_DIM]
+    Tensor v,   // packed [Batch, Head, TokensKV, HEAD_DIM]
+    Tensor o,   // linear [Batch, TokensQ, Head * HEAD_DIM]
+    float scale
+);
+
+// EXPERIMENTAL, for sm_75
+void set_faster_i2f_mode(std::string mode);
+
+// FOR TEST ONLY
+void test_rmsnorm_rope(Tensor input, Tensor output, Tensor norm_q, Tensor norm_k, Tensor rotary_emb);
+void test_pack_qkv(Tensor input, Tensor out_q, Tensor out_k, Tensor out_v, int numTokens);
 
 };  // namespace nunchaku::kernels

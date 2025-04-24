@@ -17,8 +17,8 @@ _CITATION = """\
 """
 
 _DESCRIPTION = """\
-The Densely Captioned Images dataset, or DCI, consists of 7805 images from SA-1B, 
-each with a complete description aiming to capture the full visual detail of what is present in the image. 
+The Densely Captioned Images dataset, or DCI, consists of 7805 images from SA-1B,
+each with a complete description aiming to capture the full visual detail of what is present in the image.
 Much of the description is directly aligned to submasks of the image.
 """
 

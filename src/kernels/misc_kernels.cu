@@ -180,7 +180,7 @@ std::array<Tensor, N> split_mod(Tensor input) {
 
     auto stream = getCurrentCUDAStream();
 
-    auto shapeOut = input.shape;
+    auto shapeOut = TensorShape(input.shape.dataExtent);
     shapeOut[-1] /= N;
 
     std::array<Tensor, N> out;
@@ -246,6 +246,10 @@ void cast(Tensor input, Tensor output) {
     assert(input.is_contiguous());
     assert(output.is_contiguous());
     assert(input.shape.dataExtent == output.shape.dataExtent);
+
+    if (input.data_ptr() == output.data_ptr()) {
+        assert(input.scalar_size() == output.scalar_size());
+    }
 
     auto stream = getCurrentCUDAStream();
 

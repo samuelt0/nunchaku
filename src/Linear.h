@@ -69,7 +69,11 @@ public:
     Tensor forward(Tensor x);
     Tensor forward_silu(Tensor x);
     std::variant<Tensor, QuantizedActivation> forward(Tensor x, FuseOptions fuse, GEMM_W4A4 *nextGEMM = nullptr);
-    void forward(Tensor x, Tensor out, Tensor pool = {}, Tensor norm_q = {}, Tensor norm_k = {}, Tensor rotary_emb = {});
+    void forward(
+        Tensor x, Tensor out, 
+        Tensor pool = {}, Tensor norm_q = {}, Tensor norm_k = {}, Tensor rotary_emb = {}, 
+        Tensor out_q = {}, Tensor out_k = {}, Tensor out_v = {}, int numTokens = 0
+    );
     std::variant<Tensor, QuantizedActivation> forward_quant(QuantizedActivation qact, FuseOptions fuse, GEMM_W4A4 *nextGEMM = nullptr);
     Tensor forward_quant(QuantizedActivation qact);
 

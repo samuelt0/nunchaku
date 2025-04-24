@@ -3,11 +3,11 @@
 namespace nunchaku::kernels {
 
 #ifndef __INTELLISENSE__
-template<typename Config>
-void GEMM_W4A4_Launch<Config>::gemm_w4a4(
+template<typename Config, bool USE_FP4>
+void GEMM_W4A4_Launch<Config, USE_FP4>::gemm_w4a4(
 #else
 template<>
-void GEMM_W4A4_Launch<GEMMConfig_W4A4_FP16>::gemm_w4a4(
+void GEMM_W4A4_Launch<GEMMConfig_W4A4_FP16, false>::gemm_w4a4(
 #endif
     Tensor act,           // packed act [M, K / 2]
     Tensor wgt,           // packed act [N, K / 2]
@@ -33,8 +33,17 @@ void GEMM_W4A4_Launch<GEMMConfig_W4A4_FP16>::gemm_w4a4(
     bool fuse_silu,
     bool fp4,
     float alpha,
-    Tensor wcscales       // packed ws  [N]  
+    Tensor wcscales,       // packed ws  [N]
+    Tensor out_q,          // packed attention [B, H, M, D]
+    Tensor out_k,          // packed attention [B, H, M, D]
+    Tensor out_v,          // packed attention [B, H, M, D]
+    int attn_tokens
 ) {
+#ifdef __INTELLISENSE__
+    static constexpr bool USE_FP4 = false;
+#endif
+    assert(fp4 == USE_FP4);
+
     int M = act.numel() / act.shape[-1];
     int N = wgt.shape[0];
     int K = act.shape[-1] * 2;
@@ -71,90 +80,88 @@ void GEMM_W4A4_Launch<GEMMConfig_W4A4_FP16>::gemm_w4a4(
             std::swap(grid.x, grid.y);
         }
 
-        dispatchBool(fp4, [&]<bool USE_FP4>() {
-            // test_sizeof<typename Epilogue::Arguments>();
-            // std::apply([](auto ...args) {
-            //     (test_sizeof<decltype(args)>(), ...);
-            // }, args);
+        // test_sizeof<typename Epilogue::Arguments>();
+        // std::apply([](auto ...args) {
+        //     (test_sizeof<decltype(args)>(), ...);
+        // }, args);
 
-            // constexpr bool FP4_AVAILABLE = __CUDA_ARCH__ >= 1200;
+        // constexpr bool FP4_AVAILABLE = __CUDA_ARCH__ >= 1200;
 
-            if constexpr (!USE_FP4) {
-                dispatchBool(act_unsigned, [&]<bool ACT_UNSIGNED>() {
-                    auto func = invoke_kernel<typename GEMM::gemm_w4a4_kernel<Epilogue, ACT_UNSIGNED>, 
-                        const packed_act_t *, 
-                        const packed_wgt_t *, 
-                        const packed_ascale_t *,
-                        const packed_wscale_t *,
-                        int, int, int,
-                        typename Epilogue::Arguments,
-                        bool,
-                        bool>;
+        if constexpr (!USE_FP4) {
+            dispatchBool(act_unsigned, [&]<bool ACT_UNSIGNED>() {
+                auto func = invoke_kernel<typename GEMM::gemm_w4a4_kernel<Epilogue, ACT_UNSIGNED>, 
+                    const packed_act_t *, 
+                    const packed_wgt_t *, 
+                    const packed_ascale_t *,
+                    const packed_wscale_t *,
+                    int, int, int,
+                    typename Epilogue::Arguments,
+                    bool,
+                    bool>;
 
-                    if (shmem >= 24 * 1024) {
-                        checkCUDA(cudaFuncSetAttribute(func, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem));
-                    }
+                if (shmem >= 24 * 1024) {
+                    checkCUDA(cudaFuncSetAttribute(func, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem));
+                }
 
-                    assert(alpha == 1.0f);
-                    
-                    func<<<grid, GEMM::WARP_SIZE * GEMM::NUM_WARPS, shmem, getCurrentCUDAStream()>>>(
-                        act.data_ptr<packed_act_t>(),
-                        wgt.data_ptr<packed_wgt_t>(),
-                        ascales.data_ptr<packed_ascale_t>(),
-                        wscales.data_ptr<packed_wscale_t>(),
-                        M, N, K,
-                        args,
-                        swapBlockMN,
-                        false
-                    );
-                    checkCUDA(cudaGetLastError());
-                });
-                return;
-            }
-
-            if constexpr (USE_FP4) {
-                dispatchBool(alpha != 1.0f, [&]<bool USE_ALPHA>() {
-                    assert(!act_unsigned);
-
-                    auto func = invoke_kernel<typename GEMM::gemm_w4a4_fp4_kernel<Epilogue, USE_ALPHA>, 
-                        const packed_act_t *, 
-                        const packed_wgt_t *, 
-                        const packed_amscale_t *,
-                        const packed_wmscale_t *,
-                        float,
-                        int, int, int,
-                        typename Epilogue::Arguments,
-                        bool,
-                        bool>;
-
-                    if (shmem >= 24 * 1024) {
-                        checkCUDA(cudaFuncSetAttribute(func, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem));
-                    }
-
-                    assert(ascales.dtype() == Tensor::FP8_E4M3);
-                    assert(wscales.dtype() == Tensor::FP8_E4M3);
-                    
-                    func<<<grid, GEMM::WARP_SIZE * GEMM::NUM_WARPS, shmem, getCurrentCUDAStream()>>>(
-                        act.data_ptr<packed_act_t>(),
-                        wgt.data_ptr<packed_wgt_t>(),
-                        ascales.data_ptr<packed_amscale_t>(),
-                        wscales.data_ptr<packed_wmscale_t>(),
-                        alpha,
-                        M, N, K,
-                        args,
-                        swapBlockMN,
-                        false
-                    );
-                    checkCUDA(cudaGetLastError());
-                });
+                assert(alpha == 1.0f);
                 
-                return;
-            }
+                func<<<grid, GEMM::WARP_SIZE * GEMM::NUM_WARPS, shmem, getCurrentCUDAStream()>>>(
+                    act.data_ptr<packed_act_t>(),
+                    wgt.data_ptr<packed_wgt_t>(),
+                    ascales.data_ptr<packed_ascale_t>(),
+                    wscales.data_ptr<packed_wscale_t>(),
+                    M, N, K,
+                    args,
+                    swapBlockMN,
+                    false
+                );
+                checkCUDA(cudaGetLastError());
+            });
+            return;
+        }
 
-            // if constexpr (USE_FP4 && !FP4_AVAILABLE) {
-            //     throw std::runtime_error("FP4 kernel is not available");
-            // }
-        });
+        if constexpr (USE_FP4) {
+            dispatchBool(alpha != 1.0f, [&]<bool USE_ALPHA>() {
+                assert(!act_unsigned);
+
+                auto func = invoke_kernel<typename GEMM::gemm_w4a4_fp4_kernel<Epilogue, USE_ALPHA>, 
+                    const packed_act_t *, 
+                    const packed_wgt_t *, 
+                    const packed_amscale_t *,
+                    const packed_wmscale_t *,
+                    float,
+                    int, int, int,
+                    typename Epilogue::Arguments,
+                    bool,
+                    bool>;
+
+                if (shmem >= 24 * 1024) {
+                    checkCUDA(cudaFuncSetAttribute(func, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem));
+                }
+
+                assert(ascales.dtype() == Tensor::FP8_E4M3);
+                assert(wscales.dtype() == Tensor::FP8_E4M3);
+                
+                func<<<grid, GEMM::WARP_SIZE * GEMM::NUM_WARPS, shmem, getCurrentCUDAStream()>>>(
+                    act.data_ptr<packed_act_t>(),
+                    wgt.data_ptr<packed_wgt_t>(),
+                    ascales.data_ptr<packed_amscale_t>(),
+                    wscales.data_ptr<packed_wmscale_t>(),
+                    alpha,
+                    M, N, K,
+                    args,
+                    swapBlockMN,
+                    false
+                );
+                checkCUDA(cudaGetLastError());
+            });
+            
+            return;
+        }
+
+        // if constexpr (USE_FP4 && !FP4_AVAILABLE) {
+        //     throw std::runtime_error("FP4 kernel is not available");
+        // }
     };
 
     auto launch_bias = [&]<typename NextEpilogue>(NextEpilogue::Arguments nextArgs) {
@@ -184,76 +191,82 @@ void GEMM_W4A4_Launch<GEMMConfig_W4A4_FP16>::gemm_w4a4(
         assert(lora_up.valid() == lora_act_in.valid());
         assert(lora_down.valid() == lora_act_out.valid());
 
-        if (!lora_up.valid()) {
-            assert(!lora_down.valid());
+        const int rank_up = lora_up.valid() ? lora_up.shape[1] : 0;
+        const int rank_down = lora_down.valid() ? lora_down.shape[1] : 0;
+
+        if (rank_up == 0) {
+            assert(rank_down == 0);
             return launch_bias.template operator()<typename GEMM::EpilogueCombination<MidEpilogue, NextEpilogue>>({midArgs, nextArgs});
         }
 
-        const int rank_up = lora_up.shape[1];
+
+        assert(rank_up % 16 == 0);
 
         assert(lora_up.shape[0] == N);
         // assert(lora_up.shape[1] == Lora::LORA_RANK);
         assert(lora_act_in.shape[0] == M);
         assert(lora_act_in.shape[1] == rank_up);
 
-        dispatchVal(rank_up, LoraRanks(), [&]<int RANK_UP>() {
-            using LoraUp = typename GEMM::Lora<RANK_UP>;
-            using scale_t = typename LoraUp::scale_t;
+        using LoraUp = Lora;
+        using scale_t = typename LoraUp::scale_t;
 
-            scale_t scales;
-            if constexpr (scales.size() > 0) {
-                assert(lora_scales.size() >= scales.size());
-                for (size_t i = 0; i < scales.size(); i++) {
-                    scales[i] = lora_scales[i];
-                }
+        scale_t scales;
+        if constexpr (scales.size() > 0) {
+            for (size_t i = 0; i < scales.size(); i++) {
+                scales[i] = i < lora_scales.size() ? lora_scales[i] : 0.0f;
             }
+        }
 
-            if (!lora_down.valid()) {
-                using Epilogue = typename GEMM::EpilogueCombination<typename LoraUp::EpilogueLoraUp, MidEpilogue, NextEpilogue, typename GEMM::EpilogueNop>;
-                return launch_bias.template operator()<Epilogue>({
-                    typename LoraUp::EpilogueLoraUp::Arguments{
-                        .lora_act = lora_act_in.data_ptr<float>(),
-                        .lora_wgt_up = lora_up.data_ptr<packed_fpsum_t>(),
-                        .scales = scales,
-                    },
-                    midArgs,
-                    nextArgs,
-                    {}
-                });
-            }
-
-            const int rank_down = lora_down.shape[1];
-
-            assert(rank_down == rank_up);
-
-            assert(lora_down.shape[0] == N);
-            // assert(lora_down.shape[1] == Lora::LORA_RANK);
-            assert(lora_act_out.shape[0] == M);
-            assert(lora_act_out.shape[1] == rank_down);
-
-            lora_act_out.zero_();
-
-            // dispatchVal(rank_down, std::integer_sequence<int, 16, 32, 48, 64, 80>(), [&]<int RANK_DOWN>() {
-
-            using LoraDown = LoraUp; // GEMM::Lora<RANK_DOWN>;
-            using Epilogue = typename GEMM::EpilogueCombination<typename LoraUp::EpilogueLoraUp, MidEpilogue, typename LoraDown::EpilogueLoraDown, NextEpilogue, typename GEMM::EpilogueNop>;
+        if (rank_down == 0) {
+            using Epilogue = typename GEMM::EpilogueCombination<typename LoraUp::EpilogueLoraUp, MidEpilogue, NextEpilogue, typename GEMM::EpilogueNop>;
             return launch_bias.template operator()<Epilogue>({
                 typename LoraUp::EpilogueLoraUp::Arguments{
                     .lora_act = lora_act_in.data_ptr<float>(),
                     .lora_wgt_up = lora_up.data_ptr<packed_fpsum_t>(),
+                    .rank = rank_up,
                     .scales = scales,
+                    .alwaysfalse = false,
                 },
                 midArgs,
-                typename LoraDown::EpilogueLoraDown::Arguments{
-                    .lora_wgt_down = lora_down.data_ptr<packed_fpsum_t>(),
-                    .lora_act = lora_act_out.data_ptr<float>(),
-                },
                 nextArgs,
                 {}
             });
+        }
 
-            // });
+        // assert(rank_down == rank_up);
+        assert(rank_down % 16 == 0);
+
+        assert(lora_down.shape[0] == N);
+        // assert(lora_down.shape[1] == Lora::LORA_RANK);
+        assert(lora_act_out.shape[0] == M);
+        assert(lora_act_out.shape[1] == rank_down);
+
+        lora_act_out.zero_();
+
+        // dispatchVal(rank_down, std::integer_sequence<int, 16, 32, 48, 64, 80>(), [&]<int RANK_DOWN>() {
+
+        using LoraDown = LoraUp; // GEMM::Lora<RANK_DOWN>;
+        using Epilogue = typename GEMM::EpilogueCombination<typename LoraUp::EpilogueLoraUp, MidEpilogue, typename LoraDown::EpilogueLoraDown, NextEpilogue, typename GEMM::EpilogueNop>;
+        return launch_bias.template operator()<Epilogue>({
+            typename LoraUp::EpilogueLoraUp::Arguments{
+                .lora_act = lora_act_in.data_ptr<float>(),
+                .lora_wgt_up = lora_up.data_ptr<packed_fpsum_t>(),
+                .rank = rank_up,
+                .scales = scales,
+                .alwaysfalse = false,
+            },
+            midArgs,
+            typename LoraDown::EpilogueLoraDown::Arguments{
+                .lora_wgt_down = lora_down.data_ptr<packed_fpsum_t>(),
+                .lora_act = lora_act_out.data_ptr<float>(),
+                .rank = rank_down,
+                .alwaysfalse = false,
+            },
+            nextArgs,
+            {}
         });
+
+        // });
     };
 
     if (qout.valid() && oscales.valid()) {
@@ -262,37 +275,35 @@ void GEMM_W4A4_Launch<GEMMConfig_W4A4_FP16>::gemm_w4a4(
 
         static constexpr float SHIFT_GELU = 0.171875f;
 
-        dispatchBool(fp4, [&]<bool USE_FP4>() {
-            constexpr bool USE_UNSIGNED = !USE_FP4;
-            using EpilogueQuantize = typename GEMM::EpilogueQuantize<false, USE_UNSIGNED, USE_FP4>;
-            auto argsQuantize = typename EpilogueQuantize::Arguments{
-                .qout = qout.data_ptr<packed_act_t>(),
-                .oscales = oscales.data_ptr<typename EpilogueQuantize::oscales_t>(),
-                .shift_value = USE_FP4 ? 0.0f : SHIFT_GELU,
-                .smooth_factor = smooth_factor.data_ptr<packed_wscale_t>()
-            };
+        constexpr bool USE_UNSIGNED = !USE_FP4;
+        using EpilogueQuantize = typename GEMM::EpilogueQuantize<false, USE_UNSIGNED, USE_FP4>;
+        auto argsQuantize = typename EpilogueQuantize::Arguments{
+            .qout = qout.data_ptr<packed_act_t>(),
+            .oscales = oscales.data_ptr<typename EpilogueQuantize::oscales_t>(),
+            .shift_value = USE_FP4 ? 0.0f : SHIFT_GELU,
+            .smooth_factor = smooth_factor.data_ptr<packed_wscale_t>()
+        };
 
-            // TODO: check if gelu is needed
-            if (out.valid()) {
-                launch_lora.template operator()<typename GEMM::EpilogueCombination<typename GEMM::EpilogueDefault, EpilogueQuantize>, typename GEMM::EpilogueGelu>({
-                    typename GEMM::EpilogueDefault::Arguments{
-                        .out = out.data_ptr<half_t>(),
-                        .actualM = actualM,
-                        .actualN = actualN,
-                    },
-                    argsQuantize
-                }, {});
-            } else {
-                launch_lora.template operator()<EpilogueQuantize, typename GEMM::EpilogueGelu>(argsQuantize, {});
-            }
-        });
+        // TODO: check if gelu is needed
+        if (out.valid()) {
+            launch_lora.template operator()<typename GEMM::EpilogueCombination<typename GEMM::EpilogueDefault, EpilogueQuantize>, typename Epilogues::EpilogueGelu>({
+                typename GEMM::EpilogueDefault::Arguments{
+                    .out = out.data_ptr<half_t>(),
+                    .actualM = actualM,
+                    .actualN = actualN,
+                },
+                argsQuantize
+            }, {});
+        } else {
+            launch_lora.template operator()<EpilogueQuantize, typename Epilogues::EpilogueGelu>(argsQuantize, {});
+        }
 
         
     } else if (out_linearattn.valid()) {
 
         assert(out_vk.valid());
 
-        using Epilogue = typename GEMM::EpilogueLiteLA;
+        using Epilogue = typename Epilogues::EpilogueLiteLA;
 
         assert(out_vk.dtype() == Tensor::FP32);
         assert(out_vk.ndims() == 4);
@@ -327,17 +338,54 @@ void GEMM_W4A4_Launch<GEMMConfig_W4A4_FP16>::gemm_w4a4(
         assert(norm_k.valid());
         // assert(isTypeMatch<half_t>(rotary_emb.scalar_type()));
         assert(rotary_emb.scalar_type() == Tensor::FP32);
-        assert(rotary_emb.numel() == M * GEMM::EpilogueQKVProj::HEAD_DIM / 2 * GEMM::EpilogueQKVProj::ROTARY_EMB_NUM_ELEMENTS);
-        launch_lora.template operator()<typename GEMM::EpilogueQKVProj, typename GEMM::EpilogueNop>(typename GEMM::EpilogueQKVProj::Arguments{
-            .out = out.data_ptr<half_t>(),
-            .actualM = actualM,
-            .actualN = actualN,
-            .pool_out = poolout.valid() ? poolout.data_ptr<half_t>() : nullptr,
-            .rotary_emb = rotary_emb.data_ptr<float>(),
+        assert(rotary_emb.ndims() == 3);
+        assert(rotary_emb.shape[0] * rotary_emb.shape[1] == M);
+        assert(rotary_emb.shape[2] == Epilogues::EpilogueRMSNormRope::HEAD_DIM);
+
+        // assert(rotary_emb.numel() == M * GEMM::EpilogueQKVProj::HEAD_DIM / 2 * GEMM::EpilogueQKVProj::ROTARY_EMB_NUM_ELEMENTS);
+        // launch_lora.template operator()<typename GEMM::EpilogueQKVProj, typename GEMM::EpilogueNop>(typename GEMM::EpilogueQKVProj::Arguments{
+        //     .out = out.data_ptr<half_t>(),
+        //     .actualM = actualM,
+        //     .actualN = actualN,
+        //     .pool_out = poolout.valid() ? poolout.data_ptr<half_t>() : nullptr,
+        //     .rotary_emb = rotary_emb.data_ptr<float>(),
+        //     .rmsnorm_weight_q = norm_q.data_ptr<half_t>(),
+        //     .rmsnorm_weight_k = norm_k.data_ptr<half_t>(),
+        //     .epsilon = 1e-6,
+        // }, {});
+
+        using EpilogueRope = typename Epilogues::EpilogueRMSNormRope;
+        auto argsRope = typename Epilogues::EpilogueRMSNormRope::Arguments{
+            .rotary_emb = rotary_emb.data_ptr<typename EpilogueRope::packed_rotemb_t>(),
             .rmsnorm_weight_q = norm_q.data_ptr<half_t>(),
             .rmsnorm_weight_k = norm_k.data_ptr<half_t>(),
             .epsilon = 1e-6,
-        }, {});
+        };
+
+        if (out_q.valid()) {
+            launch_lora.template operator()<typename GEMM::EpilogueCombination<EpilogueRope, typename Epilogues::EpiloguePackQKV>, typename GEMM::EpilogueNop>({
+                argsRope,
+                typename Epilogues::EpiloguePackQKV::Arguments{
+                    .out_q = out_q.data_ptr<typename Epilogues::EpiloguePackQKV::packed_qkv_t>(),
+                    .out_k = out_k.data_ptr<typename Epilogues::EpiloguePackQKV::packed_qkv_t>(),
+                    .out_v = out_v.data_ptr<typename Epilogues::EpiloguePackQKV::packed_qkv_t>(),
+                    .actualM = attn_tokens,
+                    .strideHead_q = int(out_q.stride(1) * out_q.scalar_size() / sizeof(typename Epilogues::EpiloguePackQKV::packed_qkv_t)),
+                    .strideHead_k = int(out_k.stride(1) * out_k.scalar_size() / sizeof(typename Epilogues::EpiloguePackQKV::packed_qkv_t)),
+                    .strideHead_v = int(out_v.stride(1) * out_v.scalar_size() / sizeof(typename Epilogues::EpiloguePackQKV::packed_qkv_t)),
+                }
+            }, {});
+        } else {
+            launch_lora.template operator()<typename GEMM::EpilogueCombination<EpilogueRope, typename GEMM::EpilogueDefault>, typename GEMM::EpilogueNop>({
+                argsRope,
+                typename GEMM::EpilogueDefault::Arguments{
+                    .out = out.data_ptr<half_t>(),
+                    .actualM = actualM,
+                    .actualN = actualN,
+                }
+            }, {});
+        }
+        
     } else if (out.valid()) {
 
         using Epilogue = typename GEMM::EpilogueDefault;
@@ -357,9 +405,9 @@ void GEMM_W4A4_Launch<GEMMConfig_W4A4_FP16>::gemm_w4a4(
     }
 }
 
-template<typename Config>
-void GEMM_W4A4_Launch<Config>::linearattn_vk_mul_q(Tensor q, Tensor vk) {
-    using Epilogue = typename GEMM::EpilogueLiteLA;
+template<typename Config, bool USE_FP4>
+void GEMM_W4A4_Launch<Config, USE_FP4>::linearattn_vk_mul_q(Tensor q, Tensor vk) {
+    using Epilogue = typename Epilogues::EpilogueLiteLA;
 
     int batch_size = vk.shape[0];
     int num_heads = vk.shape[1];
@@ -384,8 +432,8 @@ void GEMM_W4A4_Launch<Config>::linearattn_vk_mul_q(Tensor q, Tensor vk) {
     checkCUDA(cudaGetLastError());
 }
 
-template<typename Config>
-void GEMM_W4A4_Launch<Config>::quantize_w4a4_act_fuse_lora(Tensor input, Tensor output, Tensor oscales, Tensor lora_down, Tensor lora_act_out, Tensor smooth, bool fuse_glu, bool fp4) {
+template<typename Config, bool USE_FP4>
+void GEMM_W4A4_Launch<Config, USE_FP4>::quantize_w4a4_act_fuse_lora(Tensor input, Tensor output, Tensor oscales, Tensor lora_down, Tensor lora_act_out, Tensor smooth, bool fuse_glu, bool fp4) {
     const int actualM = input.numel() / input.shape[-1];
     const int actualN = input.shape[-1];
 
@@ -407,6 +455,8 @@ void GEMM_W4A4_Launch<Config>::quantize_w4a4_act_fuse_lora(Tensor input, Tensor 
 
     const int rank = lora_down.shape[1];
 
+    assert(rank % 16 == 0);
+
     assert(lora_down.shape[0] == N);
     // assert(lora_down.shape[1] == Lora::LORA_RANK);
     assert(lora_act_out.shape[0] == M);
@@ -416,40 +466,45 @@ void GEMM_W4A4_Launch<Config>::quantize_w4a4_act_fuse_lora(Tensor input, Tensor 
 
     dim3 grid(M / GEMM::BLOCK_M, N / GEMM::BLOCK_N);
 
-    dispatchVal(rank, LoraRanks(), [&]<int RANK>() {
-        dispatchBool(fuse_glu, [&]<bool FUSE_GLU>() {
-            dispatchBool(fp4, [&]<bool USE_FP4>() {
-                using Lora = typename GEMM::Lora<RANK>;
-                using kernel = typename Lora::quantize_w4a4_fuse_lora_kernel<FUSE_GLU, USE_FP4>;
+    // dispatchVal(rank, LoraRanks(), [&]<int RANK>() {
+    dispatchBool(fuse_glu, [&]<bool FUSE_GLU>() {
+        // using Lora = typename GEMM::Lora<RANK>;
+        using kernel = typename GEMM::quantize_w4a4_fuse_lora_kernel<FUSE_GLU, USE_FP4>;
 
-                auto func = invoke_kernel<kernel, typename kernel::Arguments>;
+        auto func = invoke_kernel<kernel, typename kernel::Arguments>;
 
-                checkCUDA(cudaFuncSetAttribute(func, cudaFuncAttributeMaxDynamicSharedMemorySize, kernel::SHMEM_SIZE));
+        checkCUDA(cudaFuncSetAttribute(func, cudaFuncAttributeMaxDynamicSharedMemorySize, kernel::SHMEM_SIZE));
 
-                // log(std::format("quantize_w4a4_act_fuse_lora M={} N={} input={} output={} (size={} numel={})", M, N, input.data_ptr(), output.data_ptr(), output.buffer->getSize(), output.numel()));
+        // log(std::format("quantize_w4a4_act_fuse_lora M={} N={} input={} output={} (size={} numel={})", M, N, input.data_ptr(), output.data_ptr(), output.buffer->getSize(), output.numel()));
 
-                func<<<grid, GEMM::WARP_SIZE * GEMM::NUM_WARPS, kernel::SHMEM_SIZE, getCurrentCUDAStream()>>>(
-                    typename kernel::Arguments{
-                        .input = input.data_ptr<half_t>(),
-                        .smooth_factor = smooth.valid() ? smooth.data_ptr<packed_wscale_t>() : nullptr,
-                        .output = output.data_ptr<packed_act_t>(),
-                        .oscales = oscales.data_ptr<typename kernel::oscales_t>(),
-                        .lora_wgt_down = lora_down.data_ptr<packed_fpsum_t>(),
-                        .lora_act = lora_act_out.data_ptr<float>(),
-                        .M = M,
-                        .N = N,
-                        .actualM = actualM,
-                        .actualN = actualN,
-                    }
-                );
-                checkCUDA(cudaGetLastError());
-            });
-        });
+        func<<<grid, GEMM::WARP_SIZE * GEMM::NUM_WARPS, kernel::SHMEM_SIZE, getCurrentCUDAStream()>>>(
+            typename kernel::Arguments{
+                .input = input.data_ptr<half_t>(),
+                .smooth_factor = smooth.valid() ? smooth.data_ptr<packed_wscale_t>() : nullptr,
+                .output = output.data_ptr<packed_act_t>(),
+                .oscales = oscales.data_ptr<typename kernel::oscales_t>(),
+                .lora_wgt_down = lora_down.data_ptr<packed_fpsum_t>(),
+                .lora_act = lora_act_out.data_ptr<float>(),
+                .lora_rank = rank,
+                .M = M,
+                .N = N,
+                .actualM = actualM,
+                .actualN = actualN,
+                .alwaysfalse = false,
+            }
+        );
+        checkCUDA(cudaGetLastError());
     });
+    // });
 }
 
-template<typename Config>
-void GEMM_W4A4_Launch<Config>::quantize_w4a4_act(Tensor input, Tensor output, Tensor oscales) {
+template<typename Config, bool USE_FP4>
+void GEMM_W4A4_Launch<Config, USE_FP4>::quantize_w4a4_act(Tensor input, Tensor output, Tensor oscales) {
+    if constexpr (USE_FP4) {
+        assert(false);  // not implemented
+        return;
+    }
+
     int M = input.numel() / input.shape[-1];
     int K = input.shape[-1];
 
@@ -471,8 +526,13 @@ void GEMM_W4A4_Launch<Config>::quantize_w4a4_act(Tensor input, Tensor output, Te
     checkCUDA(cudaGetLastError());
 }
 
-template<typename Config>
-void GEMM_W4A4_Launch<Config>::quantize_w4a4_wgt(Tensor input, Tensor output, Tensor oscales) {
+template<typename Config, bool USE_FP4>
+void GEMM_W4A4_Launch<Config, USE_FP4>::quantize_w4a4_wgt(Tensor input, Tensor output, Tensor oscales) {
+    if constexpr (USE_FP4) {
+        assert(false);
+        return;
+    }
+
     int N = input.numel() / input.shape[-1];
     int K = input.shape[-1];
 

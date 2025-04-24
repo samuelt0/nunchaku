@@ -1,14 +1,17 @@
 import os
+from typing import Any, Optional
 
 import torch
 from diffusers import __version__
 from huggingface_hub import constants, hf_hub_download
-from safetensors.torch import load_file
+from torch import nn
+
+from nunchaku.utils import ceil_divide
 
 
 class NunchakuModelLoaderMixin:
     @classmethod
-    def _build_model(cls, pretrained_model_name_or_path: str | os.PathLike, **kwargs):
+    def _build_model(cls, pretrained_model_name_or_path: str | os.PathLike, **kwargs) -> tuple[nn.Module, str, str]:
         subfolder = kwargs.get("subfolder", None)
         if os.path.exists(pretrained_model_name_or_path):
             dirname = (
@@ -59,18 +62,13 @@ class NunchakuModelLoaderMixin:
             **kwargs,
         )
 
-        transformer = cls.from_config(config).to(kwargs.get("torch_dtype", torch.bfloat16))
-        state_dict = load_file(unquantized_part_path)
-        transformer.load_state_dict(state_dict, strict=False)
+        with torch.device("meta"):
+            transformer = cls.from_config(config).to(kwargs.get("torch_dtype", torch.bfloat16))
 
-        return transformer, transformer_block_path
-
-
-def ceil_div(x: int, y: int) -> int:
-    return (x + y - 1) // y
+        return transformer, unquantized_part_path, transformer_block_path
 
 
-def pad_tensor(tensor: torch.Tensor | None, multiples: int, dim: int, fill=0) -> torch.Tensor:
+def pad_tensor(tensor: Optional[torch.Tensor], multiples: int, dim: int, fill: Any = 0) -> torch.Tensor | None:
     if multiples <= 1:
         return tensor
     if tensor is None:
@@ -78,7 +76,7 @@ def pad_tensor(tensor: torch.Tensor | None, multiples: int, dim: int, fill=0) ->
     shape = list(tensor.shape)
     if shape[dim] % multiples == 0:
         return tensor
-    shape[dim] = ceil_div(shape[dim], multiples) * multiples
+    shape[dim] = ceil_divide(shape[dim], multiples) * multiples
     result = torch.empty(shape, dtype=tensor.dtype, device=tensor.device)
     result.fill_(fill)
     result[[slice(0, extent) for extent in tensor.shape]] = tensor

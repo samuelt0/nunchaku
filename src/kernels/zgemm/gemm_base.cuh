@@ -5,6 +5,7 @@
 #include "../utils.cuh"
 #include "../dispatch_utils.h"
 #include "gemm_utils.cuh"
+#include "mma_earlycuda.cuh"
 
 
 #pragma nv_diag_suppress 177
@@ -26,7 +27,7 @@
 
 namespace nunchaku::kernels {
 
-template<bool bf16>
+template<bool bf16, bool faster_i2f = false>
 class GEMMConfig_W4A4 {
 public:
     // BE CAREFUL: weights need to be repacked when the tiling size changes
@@ -40,13 +41,17 @@ public:
     static constexpr int INSN_N = 16;
     static constexpr int INSN_K = 64;
 
+    // faster i2f conversion on sm_75
+    // may generate incorrect results in certain circumstances
+    static constexpr bool FASTER_I2F = faster_i2f;
+
     using half_t  = typename std::conditional_t<bf16, __nv_bfloat16,  half>;
     using half2_t = typename std::conditional_t<bf16, __nv_bfloat162, half2>;
 };
 
 using GEMMConfig_W4A4_FP16 = GEMMConfig_W4A4<false>;
 using GEMMConfig_W4A4_BF16 = GEMMConfig_W4A4<true>;
-
+using GEMMConfig_W4A4_FP16_FasterI2F = GEMMConfig_W4A4<false, true>;
 
 class GEMMConfig_W8A8 {
 public:
@@ -199,85 +204,24 @@ public:
     static packed_f32psum_t mma_f16xf16_f32(packed_fpsum_t a, packed_fpsum_t b, packed_f32psum_t psum) {
         static_assert(std::is_same_v<half_t, half> || std::is_same_v<half_t, __nv_bfloat16>);
 
-        if constexpr (std::is_same_v<half_t, half>) {
-            asm volatile(
-                "mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 "
-                "{%0,  %1,  %2,  %3},"
-                "{%4,  %5,  %6,  %7},"
-                "{%8,  %9},"
-                "{%10,  %11,  %12,  %13};\n"
-                : 
-                "=f"(psum.data[0]), "=f"(psum.data[1]), "=f"(psum.data[2]), "=f"(psum.data[3])
-                : 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[0])), 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[1])), 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[2])), 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[3])),
-                "r"(*reinterpret_cast<unsigned int *>(&b.data[0])), 
-                "r"(*reinterpret_cast<unsigned int *>(&b.data[1])),
+        static constexpr bool is_bf16 = std::is_same_v<half_t, __nv_bfloat16>;
 
-                // "r"(0), "r"(0), "r"(0), "r"(0)
-                "f"(psum.data[0]), "f"(psum.data[1]), "f"(psum.data[2]), "f"(psum.data[3])
-            );
-            asm volatile(
-                "mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 "
-                "{%0,  %1,  %2,  %3},"
-                "{%4,  %5,  %6,  %7},"
-                "{%8,  %9},"
-                "{%10,  %11,  %12,  %13};\n"
-                : 
-                "=f"(psum.data[4]), "=f"(psum.data[5]), "=f"(psum.data[6]), "=f"(psum.data[7])
-                : 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[0])), 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[1])), 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[2])), 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[3])),
-                "r"(*reinterpret_cast<unsigned int *>(&b.data[2])), 
-                "r"(*reinterpret_cast<unsigned int *>(&b.data[3])),
-                // "r"(0), "r"(0), "r"(0), "r"(0)
-                "f"(psum.data[4]), "f"(psum.data[5]), "f"(psum.data[6]), "f"(psum.data[7])
-            );
-        }
-
-        if constexpr (std::is_same_v<half_t, __nv_bfloat16>) {
-            asm volatile(
-                "mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32 "
-                "{%0,  %1,  %2,  %3},"
-                "{%4,  %5,  %6,  %7},"
-                "{%8,  %9},"
-                "{%10,  %11,  %12,  %13};\n"
-                : 
-                "=f"(psum.data[0]), "=f"(psum.data[1]), "=f"(psum.data[2]), "=f"(psum.data[3])
-                : 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[0])), 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[1])), 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[2])), 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[3])),
-                "r"(*reinterpret_cast<unsigned int *>(&b.data[0])), 
-                "r"(*reinterpret_cast<unsigned int *>(&b.data[1])),
-
-                // "r"(0), "r"(0), "r"(0), "r"(0)
-                "f"(psum.data[0]), "f"(psum.data[1]), "f"(psum.data[2]), "f"(psum.data[3])
-            );
-            asm volatile(
-                "mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32 "
-                "{%0,  %1,  %2,  %3},"
-                "{%4,  %5,  %6,  %7},"
-                "{%8,  %9},"
-                "{%10,  %11,  %12,  %13};\n"
-                : 
-                "=f"(psum.data[4]), "=f"(psum.data[5]), "=f"(psum.data[6]), "=f"(psum.data[7])
-                : 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[0])), 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[1])), 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[2])), 
-                "r"(*reinterpret_cast<unsigned int *>(&a.data[3])),
-                "r"(*reinterpret_cast<unsigned int *>(&b.data[2])), 
-                "r"(*reinterpret_cast<unsigned int *>(&b.data[3])),
-                // "r"(0), "r"(0), "r"(0), "r"(0)
-                "f"(psum.data[4]), "f"(psum.data[5]), "f"(psum.data[6]), "f"(psum.data[7])
-            );
-        }
+        uint4 out1 = mma_m16n8k16_f32f16f16f32<is_bf16>(
+            kernels::bit_cast<uint4>(a), 
+            kernels::bit_cast<uint2>(std::array<half2_t, 2>(b.data[0], b.data[1])), 
+            kernels::bit_cast<uint4>(float4(psum.data[0], psum.data[1], psum.data[2], psum.data[3])));
+        uint4 out2 = mma_m16n8k16_f32f16f16f32<is_bf16>(
+            kernels::bit_cast<uint4>(a), 
+            kernels::bit_cast<uint2>(std::array<half2_t, 2>(b.data[2], b.data[3])), 
+            kernels::bit_cast<uint4>(float4(psum.data[4], psum.data[5], psum.data[6], psum.data[7])));
+        psum.data[0] = kernels::bit_cast<float>(out1.x);
+        psum.data[1] = kernels::bit_cast<float>(out1.y);
+        psum.data[2] = kernels::bit_cast<float>(out1.z);
+        psum.data[3] = kernels::bit_cast<float>(out1.w);
+        psum.data[4] = kernels::bit_cast<float>(out2.x);
+        psum.data[5] = kernels::bit_cast<float>(out2.y);
+        psum.data[6] = kernels::bit_cast<float>(out2.z);
+        psum.data[7] = kernels::bit_cast<float>(out2.w);
         
         return psum;
     }
@@ -308,6 +252,16 @@ public:
     #pragma unroll
         for (int i = 0; i < results.size(); i++) {
             results[i] = packed_fp32_to_fp16(input[i]);
+        }
+        return results;
+    }
+
+    __device__ __forceinline__
+    static f32psum_warp packed_fp16_to_fp32(fpsum_warp input) {
+        f32psum_warp results;
+    #pragma unroll
+        for (int i = 0; i < results.size(); i++) {
+            results[i] = packed_fp16_to_fp32(input[i]);
         }
         return results;
     }
@@ -400,7 +354,19 @@ public:
         return __shfl_sync(~0, block[packIdx].data[elementIdx], srcLane);
     }
 
-    template<bool FAST_I2F = false, typename F>
+    struct i2f_normal {
+        __device__ __forceinline__
+        static float2 int2float2(int x, int y) {
+            return make_float2(__int2float_rn(x), __int2float_rn(y));
+        }
+
+        __device__ __forceinline__
+        static half2_t int2half2(int x, int y) {
+            return float22half2<half2_t>(int2float2(x, y));
+        }
+    };
+
+    template<typename i2f = i2f_normal, typename F>
     __device__ __forceinline__
     static void apply_scales(F &&getpsum, ascale_warp ascale, wscale_warp wscale, fpsum_warp &fpsum) {
         const int laneId = threadIdx.x % WARP_SIZE;
@@ -430,30 +396,11 @@ public:
                 //     printf("before ws2 = %f %f fsum.data[%d] = %f %f\n", (float)ws2.x, (float)ws2.y, target, (float)fsum.data[target].x, (float)fsum.data[target].y);
                 // }
 
-                auto scale_fma_normal = [&]() ALWAYSINLINE {
-                    fsum.data[0] = __hfma2(float22half2<half2_t>(make_float2(__int2float_rn(psum.data[0]), __int2float_rn(psum.data[1]))), __hmul2(asx[i], ws1), fsum.data[0]);
-                    fsum.data[1] = __hfma2(float22half2<half2_t>(make_float2(__int2float_rn(psum.data[2]), __int2float_rn(psum.data[3]))), __hmul2(asy[i], ws1), fsum.data[1]);
-                    fsum.data[2] = __hfma2(float22half2<half2_t>(make_float2(__int2float_rn(psum.data[4]), __int2float_rn(psum.data[5]))), __hmul2(asx[i], ws2), fsum.data[2]);
-                    fsum.data[3] = __hfma2(float22half2<half2_t>(make_float2(__int2float_rn(psum.data[6]), __int2float_rn(psum.data[7]))), __hmul2(asy[i], ws2), fsum.data[3]);
-                };
+                fsum.data[0] = __hfma2(i2f::int2half2(psum.data[0], psum.data[1]), __hmul2(asx[i], ws1), fsum.data[0]);
+                fsum.data[1] = __hfma2(i2f::int2half2(psum.data[2], psum.data[3]), __hmul2(asy[i], ws1), fsum.data[1]);
+                fsum.data[2] = __hfma2(i2f::int2half2(psum.data[4], psum.data[5]), __hmul2(asx[i], ws2), fsum.data[2]);
+                fsum.data[3] = __hfma2(i2f::int2half2(psum.data[6], psum.data[7]), __hmul2(asy[i], ws2), fsum.data[3]);
 
-                // should be faster on sm_80
-                auto scale_fma_fast = [&]() ALWAYSINLINE {
-                    fsum.data[0] = __hfma2(float22half2<half2_t>(make_float2(int2float_fast(psum.data[0]), int2float_fast(psum.data[1]))), __hmul2(asx[i], ws1), fsum.data[0]);
-                    fsum.data[1] = __hfma2(float22half2<half2_t>(make_float2(int2float_fast(psum.data[2]), int2float_fast(psum.data[3]))), __hmul2(asy[i], ws1), fsum.data[1]);
-                    fsum.data[2] = __hfma2(float22half2<half2_t>(make_float2(int2float_fast(psum.data[4]), int2float_fast(psum.data[5]))), __hmul2(asx[i], ws2), fsum.data[2]);
-                    fsum.data[3] = __hfma2(float22half2<half2_t>(make_float2(int2float_fast(psum.data[6]), int2float_fast(psum.data[7]))), __hmul2(asy[i], ws2), fsum.data[3]);
-                };
-            
-            #if defined(__CUDA_ARCH__) && __CUDA_ARCH__ <= 800
-                if constexpr (FAST_I2F) {
-                    scale_fma_fast();
-                } else {
-                    scale_fma_normal();
-                }
-            #else
-                scale_fma_normal();
-            #endif
                 // if (threadIdx.x == 3 && j == 1 && i == 0) {
                 //     printf("before ws2 = %f %f fsum.data[%d] = %f %f\n", (float)ws2.x, (float)ws2.y, target, (float)fsum.data[target].x, (float)fsum.data[target].y);
                 // }
@@ -461,7 +408,7 @@ public:
         }
     }
 
-    template<typename F>
+    template<typename i2f = i2f_normal, typename F>
     __device__ __forceinline__
     static void apply_scales(F &&getpsum, ascale_warp ascale, wscale_warp wscale, f32psum_warp &fpsum) {
         const int laneId = threadIdx.x % WARP_SIZE;
@@ -490,10 +437,10 @@ public:
 
                 packed_psum_t psum = getpsum(i, j);
 
-                fma2(make_float2(__int2float_rn(psum.data[0]), __int2float_rn(psum.data[1])), asx[i] * ws1, fsum.data[0], fsum.data[1]);
-                fma2(make_float2(__int2float_rn(psum.data[2]), __int2float_rn(psum.data[3])), asy[i] * ws1, fsum.data[2], fsum.data[3]);
-                fma2(make_float2(__int2float_rn(psum.data[4]), __int2float_rn(psum.data[5])), asx[i] * ws2, fsum.data[4], fsum.data[5]);
-                fma2(make_float2(__int2float_rn(psum.data[6]), __int2float_rn(psum.data[7])), asy[i] * ws2, fsum.data[6], fsum.data[7]);
+                fma2(i2f::int2float2(psum.data[0], psum.data[1]), asx[i] * ws1, fsum.data[0], fsum.data[1]);
+                fma2(i2f::int2float2(psum.data[2], psum.data[3]), asy[i] * ws1, fsum.data[2], fsum.data[3]);
+                fma2(i2f::int2float2(psum.data[4], psum.data[5]), asx[i] * ws2, fsum.data[4], fsum.data[5]);
+                fma2(i2f::int2float2(psum.data[6], psum.data[7]), asy[i] * ws2, fsum.data[6], fsum.data[7]);
             }
         }
     }
@@ -633,6 +580,63 @@ public:
         }
     };
 
+    // loads act of [WARP_M, WARP_N] and stores to fpsum_warp
+    // [WARP_M, WARP_N * 2] when fuse_glu
+    template<bool fuse_glu>
+    struct load_act_to_fpsum {
+        using matrix_t = half_t[INSN_M][WARP_N + 8];
+        static constexpr size_t SHMEM_SIZE = sizeof(matrix_t);
+
+        __device__ __forceinline__
+        void operator()(const half_t *input, int stride, int maxRows, int maxCols, fpsum_warp &out, void *shmem) {
+            const int laneId = threadIdx.x % WARP_SIZE;
+
+            matrix_t &mat = *reinterpret_cast<matrix_t *>(shmem);
+
+            constexpr int PACK_SIZE = WARP_N / WARP_SIZE;
+            using packed_input = std::array<half_t, PACK_SIZE>;
+            using packed_raw_input = std::array<half2_t, PACK_SIZE>;
+
+        #pragma unroll
+            for (int m = 0; m < WARP_M_TILES; m++) {
+        #pragma unroll
+                for (int row = 0; row < INSN_M; row++) {
+                    packed_input pack;
+                    // TODO: numCols not multiples of PACK_SIZE
+                    if constexpr (fuse_glu) {
+                        packed_raw_input raw;
+                        raw.fill(half2_t(0, 0));
+                        bool pred = (m * INSN_M + row) < maxRows && laneId * PACK_SIZE * 2 < maxCols;
+                        if (pred) {
+                            raw = load(reinterpret_cast<const packed_raw_input *>(input + (m * INSN_M + row) * stride + laneId * PACK_SIZE * 2));
+                        }
+                    #pragma unroll
+                        for (int j = 0; j < PACK_SIZE; j++) {
+                            pack[j] = raw[j].x * silu(raw[j].y);
+                        }
+                    } else {
+                        pack.fill(half_t(0));
+                        bool pred = (m * INSN_M + row) < maxRows && laneId * PACK_SIZE < maxCols;
+                        if (pred) {
+                            pack = load(reinterpret_cast<const packed_input *>(input + (m * INSN_M + row) * stride + laneId * PACK_SIZE));
+                        }
+                    }
+                    store<true>(reinterpret_cast<packed_input *>(&mat[row][laneId * PACK_SIZE]), pack);
+                }
+                __syncwarp();
+
+                for (int n = 0; n < WARP_N_TILES; n++) {
+                    const int row = laneId % 16;
+                    const int col = n * INSN_N + laneId / 16 * 8;
+                    uint4 tmp;
+                    ldmatrix(&mat[row][col], tmp);
+                    *reinterpret_cast<uint4 *>(&out[m * WARP_N_TILES + n]) = tmp;
+                }
+                __syncwarp();
+            }
+        }
+    };
+
     
     template<typename F>
     __device__ __forceinline__
@@ -662,7 +666,7 @@ public:
         };
 
         __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp fpsum, int M, int N, int K, Arguments args) {
+        void operator()(const BlockInfo binfo, fpsum_warp fpsum, int M, int N, int K, const Arguments &args) {
             const int warpId = threadIdx.x / WARP_SIZE;
             
             __shared__ alignas(128) uint8_t shmem[NUM_WARPS][ceilDiv(unpack_fpsum::SHMEM_SIZE, 128) * 128];
@@ -695,7 +699,7 @@ public:
         struct Arguments { size_t unused; };
 
         __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp fpsum, int M, int N, int K, Arguments args) {
+        void operator()(const BlockInfo binfo, fpsum_warp fpsum, int M, int N, int K, const Arguments &args) {
         }
     };
 
@@ -759,7 +763,7 @@ public:
         }
 
         __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, Arguments args) {
+        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, const Arguments &args) {
             const int bn = binfo.bn;
             if constexpr (USE_BIAS || USE_SCALE) {
                 apply_bias(
@@ -775,7 +779,7 @@ public:
         struct Arguments { size_t unused; };
 
         __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, Arguments args) {
+        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, const Arguments &args) {
             fpsum = apply_act(fpsum, [](half_t x) { return silu(x); });
         }
     };
@@ -785,7 +789,7 @@ public:
         using Arguments = std::tuple<typename Epilogues::Arguments...>;
 
         __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, Arguments args) {
+        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, const Arguments &args) {
             // this function makes intellisense crashes :(
     #if __INTELLISENSE__
             __trap();   // should not happen when actually compiling
@@ -863,11 +867,36 @@ public:
     using Base::pack_wscales; \
     using Base::apply_act;
 
+template<typename kernel>
+constexpr int min_arch() {
+    if constexpr (requires {kernel::MIN_ARCH;}) {
+        return kernel::MIN_ARCH;
+    } else {
+        return 0;
+    }
+}
+template<typename kernel>
+constexpr int max_arch() {
+    if constexpr (requires {kernel::MAX_ARCH;}) {
+        return kernel::MAX_ARCH;
+    } else {
+        return INT_MAX;
+    }
+}
 
 template<typename kernel, typename ...T>
 __global__
 static void invoke_kernel(T ...args) {
+#ifdef __CUDA_ARCH__
+    if constexpr (__CUDA_ARCH__ >= min_arch<kernel>() && __CUDA_ARCH__ <= max_arch<kernel>()) {
+        kernel()(args...);
+    } else {
+        trap_unsupported_arch();
+    }
+#else
+    // ???
     kernel()(args...);
+#endif
 }
 
 template<typename T>

@@ -319,6 +319,10 @@ __device__ __inline__ void share_to_reg_one_stage_B(f16_t *src, f16_t *src_scale
 template <typename f16_t, int CTA_M, int CTA_N, int CTA_K, int WARP_M, int WARP_N, int WARP_K, int STAGES, int G, int SPLITK>
 __global__ void gemm_w4a16_T1(f16_t *__restrict__ A, f16_t *__restrict__ B, f16_t *__restrict__ scales, f16_t *__restrict__ zeros, f16_t *__restrict__ C, int *__restrict__ semaphores, int M, int N, int K)
 {
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 800
+  trap_unsupported_arch();
+  return;
+#endif
   using f162_t = typename packed_as<f16_t, 2>::type;
 
   constexpr int NUM_WARPS_MN = CTA_M / WARP_M * CTA_N / WARP_N;
@@ -776,6 +780,10 @@ __device__ __inline__ void share_to_reg_one_stage_B_T2(f16_t *src, f16_t *src_sc
 template <typename f16_t, int CTA_M, int CTA_N, int CTA_K, int WARP_M, int WARP_N, int WARP_K, int STAGES, int G>
 __global__ void gemm_w4a16_T2(f16_t *__restrict__ A, f16_t *__restrict__ B, f16_t *__restrict__ scales, f16_t *__restrict__ zeros, f16_t *__restrict__ C, int M, int N, int K)
 {
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 800
+  trap_unsupported_arch();
+  return;
+#endif
   using f162_t = typename packed_as<f16_t, 2>::type;
   constexpr int NUM_WARPS = CTA_M / WARP_M * CTA_N / WARP_N;
   constexpr int CTA_SIZE = NUM_WARPS * WARP_SIZE;

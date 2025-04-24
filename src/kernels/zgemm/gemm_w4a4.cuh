@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gemm_base.cuh"
+#include "lora.cuh"
 // #include "gemm_w4a4_block.cuh"
 
 namespace nunchaku::kernels {
@@ -256,7 +257,7 @@ public:
         const packed_wmscale_t *wscales,
         float alpha,  // per-tensor scale of weight
         int M, int N, int K, 
-        Epilogue::Arguments epilogueArgs,
+        const Epilogue::Arguments &epilogueArgs,
         bool alwaysfalse)
     {
         constexpr int NUM_STAGES = 2;
@@ -335,6 +336,7 @@ public:
 
     template<typename Epilogue, bool USE_ALPHA>
     struct gemm_w4a4_fp4_kernel {
+        static constexpr int MIN_ARCH = 1200;
         __device__
         void operator()(
             const packed_act_t *act,
@@ -389,67 +391,16 @@ public:
     static packed_psum_t mma(packed_act_t act, packed_wgt_t wgt) {
         packed_psum_t psum;
 
-        if constexpr (!ACT_UNSIGNED) {
-            asm volatile(
-                "mma.sync.aligned.m16n8k64.row.col.s32.s4.s4.s32 "
-                "{%0,  %1,  %2,  %3},"
-                "{%4,  %5,  %6,  %7},"
-                "{%8,  %9},"
-                "{%10,  %11,  %12,  %13};\n"
-                : 
-                "=r"(psum.data[0]), "=r"(psum.data[1]), "=r"(psum.data[2]), "=r"(psum.data[3])
-                : 
-                "r"(act.x), "r"(act.y), "r"(act.z), "r"(act.w),
-                "r"(wgt.x), "r"(wgt.y),
-                "r"(0), "r"(0), "r"(0), "r"(0)
-                // "r"(psum.data[0]), "r"(psum.data[1]), "r"(psum.data[2]), "r"(psum.data[3])
-            );
-            asm volatile(
-                "mma.sync.aligned.m16n8k64.row.col.s32.s4.s4.s32 "
-                "{%0,  %1,  %2,  %3},"
-                "{%4,  %5,  %6,  %7},"
-                "{%8,  %9},"
-                "{%10,  %11,  %12,  %13};\n"
-                : 
-                "=r"(psum.data[4]), "=r"(psum.data[5]), "=r"(psum.data[6]), "=r"(psum.data[7])
-                : 
-                "r"(act.x), "r"(act.y), "r"(act.z), "r"(act.w),
-                "r"(wgt.z), "r"(wgt.w),
-                "r"(0), "r"(0), "r"(0), "r"(0)
-                // "r"(psum.data[4]), "r"(psum.data[5]), "r"(psum.data[6]), "r"(psum.data[7])
-            );
-        }
-
-        if constexpr (ACT_UNSIGNED) {
-            asm volatile(
-                "mma.sync.aligned.m16n8k64.row.col.s32.u4.s4.s32 "
-                "{%0,  %1,  %2,  %3},"
-                "{%4,  %5,  %6,  %7},"
-                "{%8,  %9},"
-                "{%10,  %11,  %12,  %13};\n"
-                : 
-                "=r"(psum.data[0]), "=r"(psum.data[1]), "=r"(psum.data[2]), "=r"(psum.data[3])
-                : 
-                "r"(act.x), "r"(act.y), "r"(act.z), "r"(act.w),
-                "r"(wgt.x), "r"(wgt.y),
-                "r"(0), "r"(0), "r"(0), "r"(0)
-                // "r"(psum.data[0]), "r"(psum.data[1]), "r"(psum.data[2]), "r"(psum.data[3])
-            );
-            asm volatile(
-                "mma.sync.aligned.m16n8k64.row.col.s32.u4.s4.s32 "
-                "{%0,  %1,  %2,  %3},"
-                "{%4,  %5,  %6,  %7},"
-                "{%8,  %9},"
-                "{%10,  %11,  %12,  %13};\n"
-                : 
-                "=r"(psum.data[4]), "=r"(psum.data[5]), "=r"(psum.data[6]), "=r"(psum.data[7])
-                : 
-                "r"(act.x), "r"(act.y), "r"(act.z), "r"(act.w),
-                "r"(wgt.z), "r"(wgt.w),
-                "r"(0), "r"(0), "r"(0), "r"(0)
-                // "r"(psum.data[4]), "r"(psum.data[5]), "r"(psum.data[6]), "r"(psum.data[7])
-            );
-        }
+        uint4 out1 = mma_m16n8kx_s32common<mma_helper::s4u4<ACT_UNSIGNED>, mma_helper::s4>(act, uint2(wgt.x, wgt.y), uint4(0, 0, 0, 0));
+        uint4 out2 = mma_m16n8kx_s32common<mma_helper::s4u4<ACT_UNSIGNED>, mma_helper::s4>(act, uint2(wgt.z, wgt.w), uint4(0, 0, 0, 0));
+        psum.data[0] = out1.x;
+        psum.data[1] = out1.y;
+        psum.data[2] = out1.z;
+        psum.data[3] = out1.w;
+        psum.data[4] = out2.x;
+        psum.data[5] = out2.y;
+        psum.data[6] = out2.z;
+        psum.data[7] = out2.w;
         
         return psum;
     }
@@ -550,63 +501,6 @@ public:
         }
     }
 
-    // loads act of [WARP_M, WARP_N] and stores to fpsum_warp
-    // [WARP_M, WARP_N * 2] when fuse_glu
-    template<bool fuse_glu>
-    struct load_act_to_fpsum {
-        using matrix_t = half_t[WARP_M][WARP_N + 8];
-        static constexpr size_t SHMEM_SIZE = sizeof(matrix_t);
-
-        __device__ __forceinline__
-        void operator()(const half_t *input, int stride, int maxRows, int maxCols, fpsum_warp &out, void *shmem) {
-            const int laneId = threadIdx.x % WARP_SIZE;
-
-            matrix_t &mat = *reinterpret_cast<matrix_t *>(shmem);
-
-            constexpr int PACK_SIZE = WARP_N / WARP_SIZE;
-            using packed_input = std::array<half_t, PACK_SIZE>;
-            using packed_raw_input = std::array<half2_t, PACK_SIZE>;
-
-        #pragma unroll
-            for (int row = 0; row < WARP_M; row++) {
-                packed_input pack;
-                // TODO: numCols not multiples of PACK_SIZE
-                if constexpr (fuse_glu) {
-                    packed_raw_input raw;
-                    raw.fill(half2_t(0, 0));
-                    bool pred = row < maxRows && laneId * PACK_SIZE * 2 < maxCols;
-                    if (pred) {
-                        raw = load(reinterpret_cast<const packed_raw_input *>(input + row * stride + laneId * PACK_SIZE * 2));
-                    }
-                #pragma unroll
-                    for (int j = 0; j < PACK_SIZE; j++) {
-                        pack[j] = raw[j].x * silu(raw[j].y);
-                    }
-                } else {
-                    pack.fill(half_t(0));
-                    bool pred = row < maxRows && laneId * PACK_SIZE < maxCols;
-                    if (pred) {
-                        pack = load(reinterpret_cast<const packed_input *>(input + row * stride + laneId * PACK_SIZE));
-                    }
-                }
-                store<true>(reinterpret_cast<packed_input *>(&mat[row][laneId * PACK_SIZE]), pack);
-            }
-            __syncwarp();
-
-            for (int m = 0; m < WARP_M_TILES; m++) {
-                for (int n = 0; n < WARP_N_TILES; n++) {
-                    const int row = m * INSN_M + laneId % 16;
-                    const int col = n * INSN_N + laneId / 16 * 8;
-                    uint4 tmp;
-                    ldmatrix(&mat[row][col], tmp);
-                    *reinterpret_cast<uint4 *>(&out[m * WARP_N_TILES + n]) = tmp;
-                }
-            }
-            __syncwarp();
-        }
-    };
-
-    
 
     /**
      * each warp quantizes a INSN_M * INSN_K (16 * 64) matrix
@@ -707,6 +601,7 @@ public:
 
     // each thread block (1 warp) quantize WARP_M * WARP_K tile (32 * 64)
     struct quantize_w4a4_act_kernel {
+        static constexpr int MIN_ARCH = std::is_same_v<half_t, __nv_bfloat16> ? 800 : 750;
         __device__ 
         void operator()(const half_t *input, packed_act_t *output, packed_ascale_t *oscales, int K) {
             const int laneId = threadIdx.x % WARP_SIZE;
@@ -744,6 +639,7 @@ public:
     
     // each thread block (1 warp) quantize WARP_N * WARP_K tile (128 * 64)
     struct quantize_w4a4_wgt_kernel {
+        static constexpr int MIN_ARCH = std::is_same_v<half_t, __nv_bfloat16> ? 800 : 750;
         __device__ 
         void operator()(const half_t *input, packed_wgt_t *output, packed_wscale_t *oscales, int K) {
             const int laneId = threadIdx.x % WARP_SIZE;
@@ -777,10 +673,54 @@ public:
         }
     };
 
+    struct i2f_sm80 {
+        __device__ __forceinline__
+        static float2 int2float2(int x, int y) {
+            return make_float2(int2float_fast(x), int2float_fast(y));
+        }
+
+        __device__ __forceinline__
+        static half2_t int2half2(int x, int y) {
+            return float22half2<half2_t>(int2float2(x, y));
+        }
+    };
+
+    struct i2f_sm75 {
+        __device__ __forceinline__
+        static float2 int2float2(int x, int y) {
+            return make_float2(int2float_fast(x), int2float_fast(y));
+        }
+
+        __device__ __forceinline__
+        static half2_t int2half2(int x, int y) {
+            return half2(__int2half_rn(x), __int2half_rn(y));
+        }
+    };
+
+    struct i2f_sm75_fast {
+        __device__ __forceinline__
+        static float2 int2float2(int x, int y) {
+            return make_float2(int2float_fast(x), int2float_fast(y));
+        }
+
+        __device__ __forceinline__
+        static half2_t int2half2(int x, int y) {
+            return int2half2_fast_512(x, y);
+        }
+    };
+
     template<bool ACT_UNSIGNED, typename T>
     __device__ __forceinline__
     static void compute(act_warp A, wgt_warp W, ascale_warp ascale, wscale_warp wscale, T &fpsum) {
-        apply_scales<true>([&](int i, int j) {
+    #if defined(__CUDA_ARCH__) && __CUDA_ARCH__ == 800
+        using int2half2 = i2f_sm80;
+    #elif defined(__CUDA_ARCH__) && __CUDA_ARCH__ == 750
+        using int2half2 = std::conditional_t<Config::FASTER_I2F, i2f_sm75_fast, i2f_sm75>;;
+    #else
+        using int2half2 = Base::i2f_normal;
+    #endif
+
+        Base::template apply_scales<int2half2>([&](int i, int j) {
             return mma<ACT_UNSIGNED>(A[i], W[j]);
         }, ascale, wscale, fpsum);
     }
@@ -875,7 +815,7 @@ public:
     }
 
     // out: [M / BLOCK_M, N / BLOCK_N, NUM_WARPS, 1, NUM_M_TILES, NUM_N_TILES, WARP_SIZE] of fpsum_warp
-    template<typename Epilogue, bool ACT_UNSIGNED>
+    template<typename Epilogue, bool ACT_UNSIGNED, bool USE_FP32_ACCUM>
     __device__ __forceinline__
     static void gemm_w4a4_block(
         const BlockInfo binfo,
@@ -886,7 +826,7 @@ public:
         // const packed_wscale_t *bias_ptr,
         // half_t *out,
         int M, int N, int K, 
-        Epilogue::Arguments epilogueArgs,
+        const Epilogue::Arguments &epilogueArgs,
         bool alwaysfalse)
     {
         constexpr int NUM_STAGES = 2;
@@ -902,7 +842,7 @@ public:
         wgt_warp W[NUM_STAGES];  // 32
         ascale_warp ascale[NUM_STAGES];  // 1
         wscale_warp wscale[NUM_STAGES];  // 2
-        fpsum_warp fpsum;   // 64
+        std::conditional_t<USE_FP32_ACCUM, f32psum_warp, fpsum_warp> fpsum;   // 64
 
         // load_wscale<true>(wscales, wscale[0], true);
         // load_wscale<false>(wscales, wscale[1], true);
@@ -916,16 +856,16 @@ public:
         }
 
         for (auto &pack : fpsum) {
-    #if 1
-            for (int i = 0; i < 4; i++) {
-                pack.data[i].x = 0;
-                pack.data[i].y = 0;
+            if constexpr (USE_FP32_ACCUM) {
+                for (int i = 0; i < 8; i++) {
+                    pack.data[i] = 0;
+                }
+            } else {
+                for (int i = 0; i < 4; i++) {
+                    pack.data[i].x = 0;
+                    pack.data[i].y = 0;
+                }
             }
-    #else 
-            for (int i = 0; i < 8; i++) {
-                pack.data[i] = 0;
-            }
-    #endif
         }
         
         int dummy = 0;
@@ -949,9 +889,11 @@ public:
 
                 compute<ACT_UNSIGNED>(A[k2], W[k2], ascale[k2], wscale[k2], fpsum);
 
+            //#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 800
                 if (alwaysfalse) {
                     dummy = clock();
                 }
+            //#endif
 
                 // asm volatile ("membar.cta;");
             }
@@ -961,11 +903,12 @@ public:
 
 #endif
 
-    #if 0
-        auto f16psum = packed_fp32_to_fp16(fpsum);
-    #else
-        auto f16psum = fpsum;
-    #endif
+        fpsum_warp f16psum;
+        if constexpr (USE_FP32_ACCUM) {
+            f16psum = packed_fp32_to_fp16(fpsum);
+        } else {
+            f16psum = fpsum;
+        }
 
         CHECK_NAN(f16psum, "f16psum");
 
@@ -1057,7 +1000,7 @@ public:
         }
 
         __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp fpsum, int M, int N, int K, Arguments args) {
+        void operator()(const BlockInfo binfo, fpsum_warp fpsum, int M, int N, int K, const Arguments &args) {
             const int bm = binfo.bm;
             const int bn = binfo.bn;
 
@@ -1077,758 +1020,11 @@ public:
     };
     // using EpilogueQuantizeFuseGelu = EpilogueQuantize<true>;
 
-    template<int rank = 32>
-    struct Lora {
-        static_assert(rank % 16 == 0);
-
-        static constexpr int LORA_RANK = rank;
-        static constexpr int LORA_M_TILES = WARP_M / 16;
-        static constexpr int LORA_R_TILES = LORA_RANK / 16;
-        static constexpr int LORA_N_TILES = WARP_N / 16;
-
-        static_assert(LORA_M_TILES == WARP_M_TILES);
-        static_assert(LORA_N_TILES == WARP_N_TILES);
-        
-        // lora_down: [WARP_M, WARP_N] x [WARP_N, R] (row-wise) = [WARP_M, R]
-        // lora up:   [WARP_M, R]      x [WARP_N, R] (col-wise) = [WARP_M, WARP_N]
-        // we use fp32 for lora activation since there's no bf16 reduction in sm_89 :(
-
-        using lora_act_warp   = std::array<packed_f32psum_t, LORA_M_TILES * LORA_R_TILES>;
-        using lora_act16_warp = std::array<packed_fpsum_t, LORA_M_TILES * LORA_R_TILES>;
-        using lora_wgt_warp = std::array<packed_fpsum_t, LORA_N_TILES * LORA_R_TILES>;
-
-        using scale_t = std::array<float, LORA_R_TILES>;
-
-        // lora_wgt:   [N / 16, LORA_R_TILES, WARP_SIZE] of packed_fpsum_t
-        __device__ __forceinline__
-        static lora_wgt_warp load_lora_wgt(const packed_fpsum_t *ptr) {
-            const int laneId = threadIdx.x % WARP_SIZE;
-
-            const packed_fpsum_t *ptr_lane = ptr + laneId;
-
-            lora_wgt_warp result;
-    #if 0
-        #pragma unroll
-            for (int n = 0; n < LORA_N_TILES; n++) {
-        #pragma unroll
-                for (int r = 0; r < LORA_R_TILES; r++) {
-                    result[n * LORA_R_TILES + r] = load(ptr_lane + (n * LORA_R_TILES + r) * WARP_SIZE);
-                }
-            }
-    #else
-            unrolled_loop<LORA_N_TILES>([&]<int n>() {
-                unrolled_loop<LORA_R_TILES>([&]<int r>() {
-                    constexpr int offset = (n * LORA_R_TILES + r) * WARP_SIZE;
-                    result[n * LORA_R_TILES + r] = load(ptr_lane + offset);
-                });
-            });
-    #endif
-            return result;
-        }
-
-        // lora_act: [M / BLOCK_M, NUM_WARPS, LORA_M_TILES, LORA_R_TILES, 8, WARP_SIZE] of float
-        __device__ __forceinline__
-        static lora_act16_warp load_lora_act(const float *ptr, scale_t scales) {
-            const int laneId = threadIdx.x % WARP_SIZE;
-
-            const float *ptrlane = ptr + laneId;
-
-            lora_act16_warp result;
-    #if 0
-        #pragma unroll
-            for (int i = 0; i < LORA_M_TILES * LORA_R_TILES; i++) {
-                packed_f32psum_t tmp;
-        #pragma unroll
-                for (int j = 0; j < 8; j++) {
-                    const int offset = i * 8 * WARP_SIZE + j * WARP_SIZE;
-                    tmp.data[j] = ptrlane[offset];
-                    // tmp.data[j] = ptr[i * 8 * WARP_SIZE + j * WARP_SIZE + laneId];
-                }
-                CHECK_NAN(tmp, "load_lora_act.tmp");
-                result[i] = packed_fp32_to_fp16(tmp);
-            }
-    #else
-            unrolled_loop<LORA_M_TILES>([&]<int m>() {
-                unrolled_loop<LORA_R_TILES>([&]<int r>{
-                    constexpr int i = m * LORA_R_TILES + r;
-                    packed_f32psum_t tmp;
-                    unrolled_loop<8>([&]<int j>() { 
-                        constexpr int offset = i * 8 * WARP_SIZE + j * WARP_SIZE;
-                        tmp.data[j] = ptrlane[offset] * scales[r];
-                    });
-                    CHECK_NAN(tmp, "load_lora_act.tmp");
-                    result[i] = packed_fp32_to_fp16(tmp);
-                });
-            });
-    #endif
-            return result;
-        }
-        // no vector reduction in sm_89 :(
-        __device__ __forceinline__
-        static void reduce_lora_act(float *ptr, lora_act_warp val) {
-            const int laneId = threadIdx.x % WARP_SIZE;
-
-            float *ptrlane = ptr + laneId;
-
-        // #pragma unroll
-        //     for (int i = 0; i < LORA_M_TILES * LORA_R_TILES; i++) {
-        // #pragma unroll
-        //         for (int j = 0; j < 8; j++) {
-        //             int offset = i * 8 * WARP_SIZE + j * WARP_SIZE;
-        //             reduce_add(&ptrlane[offset], val[i].data[j]);
-        //         }
-        //     }
-
-            unrolled_loop<LORA_M_TILES * LORA_R_TILES>([&]<int i>() {
-                unrolled_loop<8>([&]<int j>() {
-                    constexpr int offset = i * 8 * WARP_SIZE + j * WARP_SIZE;
-                    reduce_add(&ptrlane[offset], val[i].data[j]);
-                });
-            });
-        }
-
-        // __device__ __forceinline__
-        // static void reduce_lora_act(float *ptr, lora_act_warp val, int m) {
-        //     const int laneId = threadIdx.x % WARP_SIZE;
-
-        //     float *ptrlane = ptr + laneId + m * LORA_R_TILES * 8 * WARP_SIZE;
-
-        //     unrolled_loop<LORA_R_TILES>([&]<int r>() {
-        //         unrolled_loop<8>([&]<int j>() {
-        //             constexpr int offset = r * 8 * WARP_SIZE + j * WARP_SIZE;
-        //             reduce_add(&ptrlane[offset], val[m * LORA_R_TILES + r].data[j]);
-        //         });
-        //     });
-        // }
-
-
-        struct EpilogueLoraUp {
-            struct Arguments {
-                const float *lora_act;
-                const packed_fpsum_t *lora_wgt_up;
-                scale_t scales;
-            };
-
-            __device__ __forceinline__
-            static void apply_lora_up(fpsum_warp &fpsum, int M, int N, int K, const float *act, const packed_fpsum_t *wgt, const scale_t scales, const BlockInfo binfo) {
-                const int laneId = threadIdx.x % WARP_SIZE;
-                const int warpId = threadIdx.x / WARP_SIZE;
-
-                if constexpr (rank > 0) {
-                    lora_act16_warp lora_act = load_lora_act(act + warpId * (LORA_M_TILES * LORA_R_TILES * 8 * WARP_SIZE), scales);
-                    lora_wgt_warp lora_wgt   = load_lora_wgt(wgt);
-                    for (int m = 0; m < LORA_M_TILES; m++) {
-                        for (int n = 0; n < LORA_N_TILES; n++) {
-                            packed_f32psum_t psum = packed_fp16_to_fp32(fpsum[m * WARP_N_TILES + n]);
-                            for (int r = 0; r < LORA_R_TILES; r++) {
-                                CHECK_NAN(lora_act[m * LORA_R_TILES + r], "lora_act");
-                                CHECK_NAN(lora_wgt[n * LORA_R_TILES + r], "lora_wgt");
-                                psum = mma_f16xf16_f32(lora_act[m * LORA_R_TILES + r], lora_wgt[n * LORA_R_TILES + r], psum);
-                            }
-                            fpsum[m * WARP_N_TILES + n] = packed_fp32_to_fp16(psum);
-                        }
-                    }
-                }
-            }
-
-            __device__ __forceinline__
-            void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, Arguments args) {
-                const int bm = binfo.bm;
-                const int bn = binfo.bn;
-
-                CHECK_NAN(fpsum, "fpsum");
-
-                if constexpr (rank == 0) {
-                    return;
-                }
-
-                apply_lora_up(
-                    fpsum, M, N, K,
-                    args.lora_act + bm * (NUM_WARPS * LORA_M_TILES * LORA_R_TILES * 8 *  WARP_SIZE),
-                    args.lora_wgt_up + bn * (BLOCK_N / 16) * LORA_R_TILES * WARP_SIZE,
-                    args.scales,
-                    binfo   // for debug
-                );
-
-                CHECK_NAN(fpsum, "fpsum");
-            }
-        };
-
-        struct EpilogueLoraDown {
-            struct Arguments {
-                const packed_fpsum_t *lora_wgt_down;
-                float *lora_act;
-            };
-
-            __device__ __forceinline__
-            static void apply_lora_down(fpsum_warp &fpsum, int M, int N, int K, float *act, const packed_fpsum_t *wgt) {
-                const int laneId = threadIdx.x % WARP_SIZE;
-                const int warpId = threadIdx.x / WARP_SIZE;
-
-                if constexpr (rank > 0) {
-                    lora_act_warp lora_act;
-                    lora_act.fill(packed_f32psum_t::zeros());
-
-                    lora_wgt_warp lora_wgt = load_lora_wgt(wgt);
-
-                    // clock_t dummy = 0;
-
-                #pragma unroll
-                    for (int m = 0; m < LORA_M_TILES; m++) {
-                #pragma unroll
-                        for (int n = 0; n < LORA_N_TILES; n++) {
-                #pragma unroll
-                            for (int r = 0; r < LORA_R_TILES; r++) {
-                                auto &psum = lora_act[m * LORA_R_TILES + r];
-
-                                CHECK_NAN(fpsum[m * WARP_N_TILES + n], "apply_lora_down.fpsum");
-                                CHECK_NAN(lora_wgt[n * LORA_R_TILES + r], "apply_lora_down.lora_wgt");
-
-                                psum = mma_f16xf16_f32(fpsum[m * WARP_N_TILES + n], lora_wgt[n * LORA_R_TILES + r], psum);
-
-                                CHECK_NAN(psum, "apply_lora_down.psum");
-                            }
-                        }
-                        // reduce_lora_act(act + warpId * (LORA_M_TILES * LORA_R_TILES * 8 * WARP_SIZE), lora_act, m);
-
-                        // if (alwaysfalse) {
-                        //     dummy = clock();
-                        // }
-                    }
-
-                    reduce_lora_act(act + warpId * (LORA_M_TILES * LORA_R_TILES * 8 * WARP_SIZE), lora_act);
-
-                    // unused_var(dummy, alwaysfalse);
-                }
-
-            }
-
-            __device__ __forceinline__
-            void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, Arguments args) {
-                const int bm = binfo.bm;
-                const int bn = binfo.bn;
-
-                if constexpr (rank == 0) {
-                    return;
-                }
-
-                apply_lora_down(
-                    fpsum, M, N, K,
-                    args.lora_act + bm * (NUM_WARPS * LORA_M_TILES * LORA_R_TILES * 8 *  WARP_SIZE),
-                    args.lora_wgt_down + bn * (BLOCK_N / 16) * LORA_R_TILES * WARP_SIZE
-                );
-            }
-        };
-
-        template<bool fuse_glu, bool use_fp4>
-        struct quantize_w4a4_fuse_lora_kernel {
-            using oscales_t = typename std::conditional_t<use_fp4, packed_amscale_t, packed_ascale_t>;
-
-            static constexpr size_t SHMEM_PER_WARP = ceilDiv<size_t>(load_act_to_fpsum<fuse_glu>::SHMEM_SIZE, 128) * 128;
-            static constexpr size_t SHMEM_SIZE = SHMEM_PER_WARP * NUM_WARPS;
-
-            struct Arguments {
-                const half_t *input;
-                const packed_wscale_t *smooth_factor;
-                packed_act_t *output;
-                oscales_t *oscales;
-                const packed_fpsum_t *lora_wgt_down;
-                float *lora_act;
-
-                // aligned to BLOCK_M and BLOCK_N
-                int M, N;   // N should be the actual K in the next GEMM (needs /2 if fuse_glu)
-                // the actual M and N   (no need to /2 if fuse_glu)
-                int actualM, actualN;
-            };
-
-            __device__ __forceinline__
-            void operator()(Arguments args) 
-            {
-                const BlockInfo binfo = {
-                    .bm = (int)blockIdx.x,
-                    .bn = (int)blockIdx.y,
-                    .numBlocksM = (int)gridDim.x,
-                    .numBlocksN = (int)gridDim.y,
-                };
-
-                const int bm = binfo.bm;
-                const int bn = binfo.bn;
-                const int warpId = threadIdx.x / WARP_SIZE;
-
-                const int m_offset = bm * BLOCK_M + warpId * WARP_M;
-                const int n_offset = bn * BLOCK_N * (fuse_glu ? 2 : 1);
-
-                extern __shared__ uint8_t shmem[];
-
-                fpsum_warp fpsum;
-
-                load_act_to_fpsum<fuse_glu>()(
-                    args.input + m_offset * args.actualN + n_offset,
-                    args.actualN,
-                    args.actualM - m_offset,
-                    args.actualN - n_offset,
-                    fpsum,
-                    shmem + warpId * SHMEM_PER_WARP
-                    // args.smooth_factor ? args.smooth_factor + n_offset : nullptr
-                );
-
-                CHECK_NAN(fpsum, "fpsum");
-                // for (int i = 0; i < 16; i++) {
-                //     printf("bm=%d bn=%d warp=%d lane=%d fpsum[%d][0:1]=%f %f\n", 
-                //         bm, bn, warpId, threadIdx.x % WARP_SIZE, i,
-                //         (float)fpsum[i].data[0].x, (float)fpsum[i].data[0].y);
-                // }
-
-                EpilogueLoraDown()(binfo, fpsum, args.M, args.N, 0, typename EpilogueLoraDown::Arguments{
-                    .lora_wgt_down = args.lora_wgt_down,
-                    .lora_act = args.lora_act,
-                });
-
-                EpilogueQuantize<false, false, use_fp4>()(binfo, fpsum, args.M, args.N, 0, typename EpilogueQuantize<false, false, use_fp4>::Arguments{
-                    .qout = args.output,
-                    .oscales = args.oscales,
-                    .shift_value = 0,
-                    .smooth_factor = args.smooth_factor
-                });
-
-            }
-        };
-    };
-
-    struct EpilogueGelu {
-        struct Arguments { size_t unused; };
-
-        // static constexpr float SHIFT_VALUE = 0.171875f;
-
-        __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, Arguments args) {
-        #pragma unroll
-            for (int i = 0; i < WARP_M_TILES; i++) {
-        #pragma unroll
-                for (int j = 0; j < WARP_N_TILES; j++) {
-        #pragma unroll
-                    for (int k = 0; k < 4; k++) {
-                        half2_t &data = fpsum[i * WARP_N_TILES + j].data[k];
-                        data = gelu_half2(data);
-                        // data = __hadd2(data, half2_t(SHIFT_VALUE, SHIFT_VALUE));
-                    }
-                }
-            }
-        }
-    };
-
-    // template<int PoolSize = 128>
-    struct EpilogueQKVProj {
-        struct Arguments {
-            half_t *out;
-            int actualM, actualN;
-
-            half_t *pool_out;         // [M / PoolSize, N]
-            const float *rotary_emb;        // [M, HEAD_DIM / 2, ROTARY_EMB_NUM_ELEMENTS]
-            const half_t *rmsnorm_weight_q; // [HEAD_DIM]
-            const half_t *rmsnorm_weight_k; // [HEAD_DIM]
-            float epsilon;
-        };
-
-        static constexpr int HEAD_DIM = 128;
-        static constexpr int NUM_HEADS_PER_WARP = WARP_N / HEAD_DIM;
-
-        static constexpr int PoolSize = 128;
-        static constexpr int NUM_WARPS_PER_POOL = PoolSize / WARP_M;
-        static constexpr int NUM_POOLS_PER_BLOCK = BLOCK_M / PoolSize;
-
-        static constexpr int ROTARY_EMB_NUM_ELEMENTS = 2;   // 1 for theta, 2 for {sin, cos} pair
-
-        __device__ __forceinline__
-        static void apply(fpsum_warp fpsum, half_t *out, int M, int N, int K, half_t *pool_out, const float *rotary_emb, const half_t *rmsnorm_weight, float epsilon, int maxRows) {
-            const int laneId = threadIdx.x % WARP_SIZE;
-            const int warpId = threadIdx.x / WARP_SIZE;
-
-            __shared__ alignas(128) uint8_t shmem[NUM_WARPS][ceilDiv(unpack_fpsum::SHMEM_SIZE, 128) * 128];
-
-            constexpr int PACK_SIZE = unpack_fpsum::PACK_SIZE;
-            using pack_t = unpack_fpsum::pack_t;
-
-            using pack_rope_t = std::array<float, PACK_SIZE / 2 * ROTARY_EMB_NUM_ELEMENTS>;
-            constexpr int LANES_PER_HEAD = HEAD_DIM / PACK_SIZE;
-
-            pack_t reduce_tmp;
-            __shared__ alignas(128) pack_t pool[NUM_WARPS];
-
-            // load rmsnorm scales
-            pack_t rms;
-            if (laneId < LANES_PER_HEAD) {
-                rms = load(reinterpret_cast<const pack_t *>(&rmsnorm_weight[laneId * PACK_SIZE]));
-            }
-            if constexpr (LANES_PER_HEAD < WARP_SIZE) {
-                for (int i = 0; i < PACK_SIZE; i++) {
-                    rms[i] = __shfl_sync(~0, rms[i], laneId % LANES_PER_HEAD);
-                }
-            }
-
-            const float *rotary_emb_base_addr = &rotary_emb[(warpId * WARP_M) * HEAD_DIM / 2 * ROTARY_EMB_NUM_ELEMENTS + laneId * PACK_SIZE / 2 * ROTARY_EMB_NUM_ELEMENTS];
-
-            CHECK_NAN(fpsum, "fpsum");
-
-            unpack_fpsum()(fpsum, out + warpId * WARP_M * N, N, maxRows - warpId * WARP_M, INT_MAX, shmem[warpId], [&](int rowId, pack_t &pack) ALWAYSINLINE {
-                // load rope
-                pack_rope_t rope;
-                if (laneId < LANES_PER_HEAD) {
-                    // freq = load(reinterpret_cast<pack_freq_t *>(&freqs_cis[(warpId * WARP_M + rowId) * HEAD_DIM * 2 + laneId * PACK_SIZE * 2]));
-                    rope = load(reinterpret_cast<const pack_rope_t *>(&rotary_emb_base_addr[rowId * HEAD_DIM / 2 * ROTARY_EMB_NUM_ELEMENTS]));
-                }
-                if constexpr (LANES_PER_HEAD < WARP_SIZE) {
-                    for (int i = 0; i < rope.size(); i++) {
-                        rope[i] = __shfl_sync(~0, rope[i], laneId % LANES_PER_HEAD);
-                    }
-                }
-
-                // rmsnorm
-                float sqrsum = 0.0f;
-                for (int i = 0; i < PACK_SIZE; i++) {
-                    sqrsum += float(pack[i]) * float(pack[i]);
-                    CHECK_NAN(sqrsum, "sqrsum");
-                }
-            #pragma unroll
-                for (int mask = LANES_PER_HEAD / 2; mask > 0; mask /= 2) {
-                    sqrsum += __shfl_xor_sync(~0, sqrsum, mask);
-                }
-                sqrsum /= HEAD_DIM;
-                float coef = cuda_frsqrt(sqrsum + epsilon);
-                CHECK_NAN(coef, "coef");
-
-                for (int i = 0; i < PACK_SIZE; i++) {
-                    pack[i] *= coef * float(rms[i]);
-
-                    CHECK_NAN(rms[i], "rms.wgt");
-                    CHECK_NAN(pack[i], "rms.out");
-                }
-
-#if 1
-                // rope
-                for (int i = 0; i < PACK_SIZE; i += 2) {
-                    float2 pack2 = half22float2(half2_t(pack[i], pack[i+1]));
-
-                    CHECK_NAN(freq[i].x, "rope.freq");
-                    CHECK_NAN(freq[i].y, "rope.freq");
-                    CHECK_NAN(freq[i+1].x, "rope.freq");
-                    CHECK_NAN(freq[i+1].y, "rope.freq");
-
-                    // half2_t tmp = __hmul2(freq[i], pack2);
-                    // tmp = __hfma2(freq[i+1], pack2, tmp);
-                    // pack[i] = tmp.x;
-                    // pack[i+1] = tmp.y;
-
-                    // printf("block.x=%d block.y=%d warpId=%d rowId=%d (%d) freqs = %f %f %f %f\n",
-                    //     blockIdx.x, blockIdx.y, warpId, rowId,
-                    //     blockIdx.x * BLOCK_M + warpId * WARP_M + rowId,
-                    //     (float)freq[i].x, (float)freq[i].y, (float)freq[i+1].x, (float)freq[i+1].y
-                    // );
-                    // __trap();
-
-                    // half2_t tmp = __hmul2(half2_t(pack2.x, pack2.x), freq[i]);
-                    // tmp = __hfma2(half2_t(pack2.y, pack2.y), freq[i+1], tmp);
-                    // pack[i] = tmp.x;
-                    // pack[i+1] = tmp.y;
-
-                    float sin, cos;
-
-                    if constexpr (ROTARY_EMB_NUM_ELEMENTS == 1) {
-                        sin = cuda_sin(rope[i / 2]);
-                        cos = cuda_cos(rope[i / 2]);
-                    }
-                    if constexpr (ROTARY_EMB_NUM_ELEMENTS == 2) {
-                        sin = rope[i];
-                        cos = rope[i+1];
-                    }
-
-                    // pack[i]   = pack2.x * freq[i].x   + pack2.y * freq[i].y;
-                    // pack[i+1] = pack2.x * freq[i+1].x + pack2.y * freq[i+1].y;
-
-                    pack[i]   = half_t(pack2.x * cos - pack2.y * sin);
-                    pack[i+1] = half_t(pack2.x * sin + pack2.y * cos);
-
-                    CHECK_NAN(pack[i], "rope.out");
-                    CHECK_NAN(pack[i+1], "rope.out");
-                }
-#endif
-
-                // mean pool
-                for (int i = 0; i < PACK_SIZE; i++) {
-                    reduce_tmp[i] += pack[i];
-                }
-            });
-
-            if (!pool_out) {
-                return;
-            }
-
-            store<true>(&pool[warpId], reduce_tmp);
-            __syncthreads();
-
-            if (warpId < NUM_POOLS_PER_BLOCK) {
-                const int row = warpId * NUM_WARPS_PER_POOL;
-                reduce_tmp = load<true>(&pool[row]);
-
-                for (int i = 1; i < NUM_WARPS_PER_POOL; i++) {
-                    pack_t pack = load<true>(&pool[row + i]);
-                    for (int j = 0; j < PACK_SIZE; j++) {
-                        reduce_tmp[j] += pack[j];
-                    }
-                }
-                for (int j = 0; j < PACK_SIZE; j++) {
-                    reduce_tmp[j] /= PoolSize;
-                }
-
-                store(reinterpret_cast<pack_t *>(pool_out + warpId * N), reduce_tmp);
-            }
-            __syncthreads();
-        }
-
-        __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp fpsum, int M, int N, int K, Arguments args) {
-            const int bm = binfo.bm;
-            const int bn = binfo.bn;
-
-            assert(binfo.numBlocksN % 3 == 0);
-            const bool is_q = bn < binfo.numBlocksN / 3;
-            const bool is_k = !is_q && bn < binfo.numBlocksN / 3 * 2;
-
-            assert(!args.pool_out || args.actualM == M);
-            assert(args.actualN == N);
-
-            if (is_q || is_k) {
-                apply(
-                    fpsum,
-                    args.out + bm * BLOCK_M * args.actualN + bn * BLOCK_N,
-                    M, N, K,
-                    args.pool_out ? args.pool_out + bm * BLOCK_M / PoolSize * N : nullptr,
-                    args.rotary_emb + bm * BLOCK_M * (HEAD_DIM / 2 * ROTARY_EMB_NUM_ELEMENTS),
-                    is_q ? args.rmsnorm_weight_q : args.rmsnorm_weight_k,
-                    args.epsilon,
-                    args.actualM - bm * BLOCK_M
-                );
-            } else {
-                EpilogueDefault()(binfo, fpsum, M, N, K, typename EpilogueDefault::Arguments{
-                    .out = args.out,
-                    .actualM = args.actualM,
-                    .actualN = args.actualN,
-                });
-            }
-        }
-    };
-
-    struct EpilogueLiteLA {
-        __device__ __forceinline__
-        static half2_t movmatrix(half2_t x) {
-            asm volatile ("movmatrix.sync.aligned.m8n8.trans.b16 %0, %1;" : "=r"(*reinterpret_cast<uint32_t *>(&x)) : "r"(*reinterpret_cast<uint32_t *>(&x)));
-            return x;
-        }
-        
-        
-        __device__ __forceinline__
-        static packed_f32psum_t mma_litela(packed_fpsum_t k, packed_fpsum_t v, packed_f32psum_t psum) {
-            for (int i = 0; i < 4; i++) {
-                k.data[i] = movmatrix(k.data[i]);
-                v.data[i] = movmatrix(v.data[i]);
-            }
-            std::swap(v.data[1], v.data[2]);
-            return mma_f16xf16_f32(v, k, psum);
-        }
-
-        static constexpr int LITELA_HEAD_DIM = 32;
-        static constexpr int LITELA_K_TILES = LITELA_HEAD_DIM / 16;
-        static constexpr int LITELA_V_TILES = LITELA_HEAD_DIM / 16;
-
-        static constexpr int SHMEM_SIZE = NUM_WARPS * (LITELA_HEAD_DIM + 1) * (LITELA_HEAD_DIM + 8) * sizeof(float);
-
-        // out_vk: [batch_size, num_heads, head_dim + 1, head_dim]
-        __device__ __forceinline__
-        static void apply_litela(const BlockInfo binfo, fpsum_warp fpsum, float *out_vk, int num_blocks_per_batch) {
-            const int laneId = threadIdx.x % WARP_SIZE;
-            const int warpId = threadIdx.x / WARP_SIZE;
-
-            using vk_t = float[NUM_WARPS][LITELA_HEAD_DIM + 1][LITELA_HEAD_DIM + 8];
-            extern __shared__ uint8_t shmem[];
-            
-            vk_t &shmem_vk = *reinterpret_cast<vk_t *>(shmem);
-
-            static_assert(sizeof(vk_t) == SHMEM_SIZE);
-            static_assert(WARP_N == BLOCK_N);
-            assert(binfo.numBlocksN % 3 == 0);
-
-            const int num_heads = binfo.numBlocksN / 3 * 2 * (WARP_N / (LITELA_HEAD_DIM * 2));
-            const int batch_id = binfo.bm / num_blocks_per_batch;
-
-            for (int head_id = 0; head_id < WARP_N / (LITELA_HEAD_DIM * 2); head_id++) {
-                const int global_head_id = (binfo.bn - binfo.numBlocksN / 3) * (WARP_N / (LITELA_HEAD_DIM * 2)) + head_id;
-                float *out_vk_current_head = out_vk + (batch_id * num_heads + global_head_id) * (LITELA_HEAD_DIM + 1) * LITELA_HEAD_DIM;
-
-                for (int i = laneId; i < sizeof(shmem_vk) / sizeof(float) / NUM_WARPS; i += WARP_SIZE) {
-                    *((&shmem_vk[warpId][0][0]) + i) = 0;
-                }
-                __syncwarp();
-
-                for (int tile_v = 0; tile_v < LITELA_V_TILES; tile_v++) {
-                    for (int tile_k = 0; tile_k < LITELA_K_TILES; tile_k++) {
-                        packed_f32psum_t attn_sum = { 0 };
-                        for (int i = 0; i < WARP_M_TILES; i++) {
-                            packed_fpsum_t k = fpsum[i * WARP_N_TILES + head_id * (LITELA_HEAD_DIM * 2) / 16 + tile_k];
-                            packed_fpsum_t v = fpsum[i * WARP_N_TILES + head_id * (LITELA_HEAD_DIM * 2) / 16 + LITELA_HEAD_DIM / 16 + tile_v];
-                            for (int j = 0; j < 4; j++) {
-                                k.data[j] = __hmax2(k.data[j], half2_t(0, 0));  // relu
-                            }
-                            attn_sum = mma_litela(k, v, attn_sum);
-                        }
-
-                        const int row = tile_v * 16 + laneId / 4;
-                        const int col = tile_k * 16 + laneId % 4 * 2;
-
-                        shmem_vk[warpId][row + 0][col + 0] = attn_sum.data[0];
-                        shmem_vk[warpId][row + 0][col + 1] = attn_sum.data[1];
-                        shmem_vk[warpId][row + 8][col + 0] = attn_sum.data[2];
-                        shmem_vk[warpId][row + 8][col + 1] = attn_sum.data[3];
-                        shmem_vk[warpId][row + 0][col + 8] = attn_sum.data[4];
-                        shmem_vk[warpId][row + 0][col + 9] = attn_sum.data[5];
-                        shmem_vk[warpId][row + 8][col + 8] = attn_sum.data[6];
-                        shmem_vk[warpId][row + 8][col + 9] = attn_sum.data[7];
-                    }
-                }
-                for (int tile_k = 0; tile_k < LITELA_K_TILES; tile_k++) {
-                    packed_f32psum_t attn_sum = { 0 };
-                    for (int i = 0; i < WARP_M_TILES; i++) {
-                        packed_fpsum_t k = fpsum[i * WARP_N_TILES + head_id * (LITELA_HEAD_DIM * 2) / 16 + tile_k];
-                        packed_fpsum_t v = {};
-                        for (int j = 0; j < 4; j++) {
-                            k.data[j] = __hmax2(k.data[j], half2_t(0, 0));  // relu
-                        }
-                    #pragma unroll
-                        for (int i = 0; i < 4; i++) {
-                            v.data[i] = half2_t(1, 1);
-                        }
-                        // if (laneId < 4) {
-                        //     v.data[0] = half2_t(1, 1);
-                        //     v.data[2] = half2_t(1, 1);
-                        // }
-                        // if (laneId % 4 == 0) {
-                        //     v.data[0] = half2_t(1, 0);
-                        //     v.data[1] = half2_t(1, 0);
-                        // }
-                        attn_sum = mma_litela(k, v, attn_sum);
-                    }
-                    const int row = LITELA_HEAD_DIM + laneId / 4;
-                    const int col = tile_k * 16 + laneId % 4 * 2;
-
-                    if (laneId < 4) {
-                        shmem_vk[warpId][row + 0][col + 0] = attn_sum.data[0];
-                        shmem_vk[warpId][row + 0][col + 1] = attn_sum.data[1];
-                        shmem_vk[warpId][row + 0][col + 8] = attn_sum.data[4];
-                        shmem_vk[warpId][row + 0][col + 9] = attn_sum.data[5];
-                    }
-                }
-                __syncthreads();
-
-                for (int i = warpId; i < LITELA_HEAD_DIM + 1; i += NUM_WARPS) {
-                    for (int j = laneId; j < LITELA_HEAD_DIM; j += WARP_SIZE) {
-                        float sum = 0;
-                        for (int k = 0; k < NUM_WARPS; k++) {
-                            sum += shmem_vk[k][i][j];
-                        }
-                        reduce_add(&out_vk_current_head[i * LITELA_HEAD_DIM + j], sum);
-                    }
-                }
-                __syncthreads();
-            }
-        }
-
-        struct Arguments {
-            half_t *out_q;
-            float *out_vk;
-            int num_blocks_per_batch;
-            int actualM;
-        };
-
-        __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp fpsum, int M, int N, int K, Arguments args) {
-            const int bm = binfo.bm;
-            const int bn = binfo.bn;
-
-            if (bn < binfo.numBlocksN / 3) {
-                fpsum = apply_act(fpsum, [](half_t x) { return __hmax(x, 0); });    // relu
-                return EpilogueDefault()(
-                    binfo,
-                    fpsum, 
-                    M, N / 3, K, typename EpilogueDefault::Arguments{
-                        .out = args.out_q,
-                        .actualM = args.actualM,
-                        .actualN = N / 3,
-                    });
-            }
-
-            return apply_litela(binfo, fpsum, args.out_vk, args.num_blocks_per_batch);
-        }
-
-        // each thread block mults BlockSize*HEAD_DIM q and (HEAD_DIM+1)*HEAD_DIM vk, in-place writes back to q
-        // q:   [batch_size, #blocks, block_size, #heads, HEAD_DIM]
-        // vk:  [batch_size, #heads, HEAD_DIM+1, HEAD_DIM]
-        struct vk_mul_q_kernel {
-            // FIXME FIXME FIXME
-            __device__
-            void operator()(half_t *q, const float *vk, float eps, int num_tokens) {
-                const int block_id = blockIdx.x;
-                const int head_id  = blockIdx.y;
-                const int batch_id = blockIdx.z;
-
-                const int num_blocks = gridDim.x;
-                const int num_heads = gridDim.y;
-                const int block_size = blockDim.x;
-
-                bool pred = block_id * block_size + threadIdx.x < num_tokens;
-
-                half_t *localq = &q[(((batch_id * num_blocks + block_id) * block_size + threadIdx.x) * num_heads + head_id) * LITELA_HEAD_DIM];
-                const float *localvk = &vk[(batch_id * num_heads + head_id) * (LITELA_HEAD_DIM + 1) * LITELA_HEAD_DIM];
-                // half_t *localout = &out[(((batch_id * num_blocks + block_id) * block_size + threadIdx.x) * num_heads + head_id) * LITELA_HEAD_DIM];
-
-                using packed_q = std::array<half_t, 8>;
-                using packed_vk = std::array<float, 4>;
-
-                half_t qblock[LITELA_HEAD_DIM];
-                for (int i = 0; i < LITELA_HEAD_DIM; i += sizeof(packed_q) / sizeof(half_t)) {
-                    if (pred) {
-                        *reinterpret_cast<packed_q *>(&qblock[i]) = load(reinterpret_cast<const packed_q *>(&localq[i]));
-                    }
-                }
-
-                float outblock[LITELA_HEAD_DIM + 1];
-            #pragma unroll
-                for (int j = 0; j < LITELA_HEAD_DIM + 1; j++) {
-                    outblock[j] = 0;
-            #pragma unroll
-                    for (int i = 0; i < LITELA_HEAD_DIM; i += sizeof(packed_vk) / sizeof(float)) {
-                        packed_vk vkpack = load(reinterpret_cast<const packed_vk *>(&localvk[j * LITELA_HEAD_DIM + i]));
-            #pragma unroll
-                        for (int k = 0; k < vkpack.size(); k++) {
-                            outblock[j] += (float)qblock[i + k] * vkpack[k];
-                        }
-                    }
-                }
-                
-                for (int i = 0; i < LITELA_HEAD_DIM; i += sizeof(packed_q) / sizeof(half_t)) {
-                    packed_q opack;
-                    for (int k = 0; k < opack.size(); k++) {
-                        opack[k] = __fdividef(outblock[i + k], outblock[LITELA_HEAD_DIM] + eps);
-                    }
-                    if (pred) {
-                        store(reinterpret_cast<packed_q *>(&localq[i]), opack);
-                    }
-                }
-            }
-        };
-    };
-
-
     template<typename Epilogue, bool ACT_UNSIGNED>
     struct gemm_w4a4_kernel {
+        static constexpr int MIN_ARCH = std::is_same_v<half_t, __nv_bfloat16> ? 800 : 750;
+        static constexpr int MAX_ARCH = Config::FASTER_I2F ? 750 : INT_MAX; // FASTER_I2F is only needed on sm_75
+
         __device__
         void operator()(
             const packed_act_t *act,
@@ -1859,7 +1055,7 @@ public:
 
             // bool fusequant = !out;
 
-            gemm_w4a4_block<Epilogue, ACT_UNSIGNED>(
+            gemm_w4a4_block<Epilogue, ACT_UNSIGNED, false>(
                 binfo,
                 act + bm * (K / WARP_K) * NUM_WARPS * WARP_M_TILES * WARP_SIZE,
                 wgt + bn * (K / WARP_K) * WARP_N_TILES * WARP_SIZE,
@@ -1874,6 +1070,91 @@ public:
             );
         }
     };
+
+    
+    template<bool fuse_glu, bool use_fp4>
+    struct quantize_w4a4_fuse_lora_kernel {
+        using oscales_t = typename std::conditional_t<use_fp4, packed_amscale_t, packed_ascale_t>;
+
+        static constexpr int MIN_ARCH = std::is_same_v<half_t, __nv_bfloat16> ? 800 : 750;
+        static constexpr size_t SHMEM_PER_WARP = ceilDiv<size_t>(Base::template load_act_to_fpsum<fuse_glu>::SHMEM_SIZE, 128) * 128;
+        static constexpr size_t SHMEM_SIZE = SHMEM_PER_WARP * NUM_WARPS;
+
+        struct Arguments {
+            const half_t *input;
+            const packed_wscale_t *smooth_factor;
+            packed_act_t *output;
+            oscales_t *oscales;
+            const packed_fpsum_t *lora_wgt_down;
+            float *lora_act;
+
+            int lora_rank;
+
+            // aligned to BLOCK_M and BLOCK_N
+            int M, N;   // N should be the actual K in the next GEMM (needs /2 if fuse_glu)
+            // the actual M and N   (no need to /2 if fuse_glu)
+            int actualM, actualN;
+
+            bool alwaysfalse;
+        };
+
+        __device__ __forceinline__
+        void operator()(Arguments args) 
+        {
+            const BlockInfo binfo = {
+                .bm = (int)blockIdx.x,
+                .bn = (int)blockIdx.y,
+                .numBlocksM = (int)gridDim.x,
+                .numBlocksN = (int)gridDim.y,
+            };
+
+            const int bm = binfo.bm;
+            const int bn = binfo.bn;
+            const int warpId = threadIdx.x / WARP_SIZE;
+
+            const int m_offset = bm * BLOCK_M + warpId * WARP_M;
+            const int n_offset = bn * BLOCK_N * (fuse_glu ? 2 : 1);
+
+            extern __shared__ uint8_t shmem[];
+
+            fpsum_warp fpsum;
+
+            Base::template load_act_to_fpsum<fuse_glu>()(
+                args.input + m_offset * args.actualN + n_offset,
+                args.actualN,
+                args.actualM - m_offset,
+                args.actualN - n_offset,
+                fpsum,
+                shmem + warpId * SHMEM_PER_WARP
+                // args.smooth_factor ? args.smooth_factor + n_offset : nullptr
+            );
+
+            CHECK_NAN(fpsum, "fpsum");
+            // for (int i = 0; i < 16; i++) {
+            //     printf("bm=%d bn=%d warp=%d lane=%d fpsum[%d][0:1]=%f %f\n", 
+            //         bm, bn, warpId, threadIdx.x % WARP_SIZE, i,
+            //         (float)fpsum[i].data[0].x, (float)fpsum[i].data[0].y);
+            // }
+
+            using EpilogueLoraDown = typename Lora<Config>::EpilogueLoraDown;
+
+            EpilogueLoraDown()(binfo, fpsum, args.M, args.N, 0, typename EpilogueLoraDown::Arguments{
+                .lora_wgt_down = args.lora_wgt_down,
+                .lora_act = args.lora_act,
+                .rank = args.lora_rank,
+                .alwaysfalse = args.alwaysfalse,
+            });
+
+            EpilogueQuantize<false, false, use_fp4>()(binfo, fpsum, args.M, args.N, 0, typename EpilogueQuantize<false, false, use_fp4>::Arguments{
+                .qout = args.output,
+                .oscales = args.oscales,
+                .shift_value = 0,
+                .smooth_factor = args.smooth_factor
+            });
+
+        }
+    };
+
 };
 
 };  // namespace nunchaku::kernels

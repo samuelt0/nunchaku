@@ -10,7 +10,7 @@ class QuantizedGEMM : public ModuleWrapper<GEMM_W4A4> {
 public:
     void init(int64_t in_features, int64_t out_features, bool bias, bool use_fp4, bool bf16, int8_t deviceId) {
         spdlog::info("Initializing QuantizedGEMM");
-        
+
         size_t val = 0;
         checkCUDA(cudaDeviceSetLimit(cudaLimitStackSize, 8192));
         checkCUDA(cudaDeviceGetLimit(&val, cudaLimitStackSize));
@@ -27,7 +27,7 @@ public:
         x = x.contiguous();
 
         Tensor result = net->forward(from_torch(x));
-        
+
         torch::Tensor output = to_torch(result);
         Tensor::synchronizeDevice();
 
@@ -48,7 +48,7 @@ public:
 
         const int M = x.shape[0];
         const int K = x.shape[1] * 2;
-        
+
         assert(x.dtype() == Tensor::INT8);
 
         // activation: row major, [M / BLOCK_M, K / WARP_K, NUM_WARPS, WARP_M_TILES, WARP_SIZE] of packed_act_t (uint4)
@@ -67,7 +67,7 @@ public:
                     const int offset = ((bm * (K / WARP_K) + bn) * NUM_WARPS + warpId) * WARP_M_TILES * WARP_SIZE * 4;
 
                     for (int i = 0; i < 16; i++) {
-                        assert(offset + i < x.numel() / 4);
+                        assert(static_cast<size_t>(offset + i) < x.numel() / 4);
                         uint32_t val = x.data_ptr<uint32_t>()[offset + i];
                         ss << "{";
                         for (int j = 0; j < 8; j++) {
@@ -83,7 +83,7 @@ public:
                 }
             }
         }
-        
+
         ss << std::endl;
         return ss.str();
     }
@@ -99,7 +99,7 @@ public:
             from_torch(x),
             fuse_glu
         );
-        
+
         Tensor act = qout.act.copy(Device::cpu());
         Tensor ascales = qout.ascales.copy(Device::cpu());
         Tensor lora_act = qout.lora_act.copy(Device::cpu());

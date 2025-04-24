@@ -59,7 +59,7 @@ class MultiImageDataset(data.Dataset):
 
 
 def compute_lpips(
-    ref_dirpath: str, gen_dirpath: str, batch_size: int = 64, num_workers: int = 8, device: str | torch.device = "cuda"
+    ref_dirpath: str, gen_dirpath: str, batch_size: int = 4, num_workers: int = 0, device: str | torch.device = "cuda"
 ) -> float:
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     metric = LearnedPerceptualImagePatchSimilarity(normalize=True).to(device)

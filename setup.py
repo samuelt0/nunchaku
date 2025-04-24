@@ -47,12 +47,12 @@ def get_sm_targets() -> list[str]:
             sm = f"{capability[0]}{capability[1]}"
             if sm == "120" and support_sm120:
                 sm = "120a"
-            assert sm in ["90","80", "86", "89", "120a"], f"Unsupported SM {sm}"
+            assert sm in ["75", "80", "86", "89", "120a"], f"Unsupported SM {sm}"
             if sm not in ret:
                 ret.append(sm)
     else:
         assert install_mode == "ALL"
-        ret = ["80", "86", "89"]
+        ret = ["75", "80", "86", "89"]
         if support_sm120:
             ret.append("120a")
     return ret
@@ -142,6 +142,7 @@ if __name__ == "__main__":
             *ncond("src/FluxModel.cpp"),
             *ncond("src/SanaModel.cpp"),
             "src/Serialization.cpp",
+            "src/Module.cpp",
             *ncond("third_party/Block-Sparse-Attention/csrc/block_sparse_attn/src/flash_fwd_hdim64_fp16_sm80.cu"),
             *ncond("third_party/Block-Sparse-Attention/csrc/block_sparse_attn/src/flash_fwd_hdim64_bf16_sm80.cu"),
             *ncond("third_party/Block-Sparse-Attention/csrc/block_sparse_attn/src/flash_fwd_hdim128_fp16_sm80.cu"),
@@ -158,9 +159,14 @@ if __name__ == "__main__":
             "src/kernels/layernorm_kernels.cu",
             "src/kernels/misc_kernels.cu",
             "src/kernels/zgemm/gemm_w4a4.cu",
-            "src/kernels/zgemm/gemm_w4a4_launch_fp16.cu",
-            "src/kernels/zgemm/gemm_w4a4_launch_bf16.cu",
+            "src/kernels/zgemm/gemm_w4a4_test.cu",
+            "src/kernels/zgemm/gemm_w4a4_launch_fp16_int4.cu",
+            "src/kernels/zgemm/gemm_w4a4_launch_fp16_int4_fasteri2f.cu",
+            "src/kernels/zgemm/gemm_w4a4_launch_fp16_fp4.cu",
+            "src/kernels/zgemm/gemm_w4a4_launch_bf16_int4.cu",
+            "src/kernels/zgemm/gemm_w4a4_launch_bf16_fp4.cu",
             "src/kernels/zgemm/gemm_w8a8.cu",
+            "src/kernels/zgemm/attention.cu",
             "src/kernels/dwconv.cu",
             "src/kernels/gemm_batched.cu",
             "src/kernels/gemm_f16.cu",

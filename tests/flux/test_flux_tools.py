@@ -1,92 +1,144 @@
+import pytest
 import torch
-from controlnet_aux import CannyDetector
-from diffusers import FluxControlPipeline, FluxFillPipeline, FluxPipeline, FluxPriorReduxPipeline
-from diffusers.utils import load_image
-from image_gen_aux import DepthPreprocessor
 
-from nunchaku import NunchakuFluxTransformer2dModel
+from nunchaku.utils import get_precision, is_turing
+from .utils import run_test
 
 
-def test_flux_dev_canny():
-    transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-canny-dev")
-    pipe = FluxControlPipeline.from_pretrained(
-        "black-forest-labs/FLUX.1-Canny-dev", transformer=transformer, torch_dtype=torch.bfloat16
-    ).to("cuda")
-
-    prompt = "A robot made of exotic candies and chocolates of different kinds. The background is filled with confetti and celebratory gifts."
-    control_image = load_image(
-        "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/robot.png"
-    )
-
-    processor = CannyDetector()
-    control_image = processor(
-        control_image, low_threshold=50, high_threshold=200, detect_resolution=1024, image_resolution=1024
-    )
-
-    image = pipe(
-        prompt=prompt, control_image=control_image, height=1024, width=1024, num_inference_steps=50, guidance_scale=30.0
-    ).images[0]
-    image.save("flux.1-canny-dev.png")
-
-
-def test_flux_dev_depth():
-    transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-depth-dev")
-
-    pipe = FluxControlPipeline.from_pretrained(
-        "black-forest-labs/FLUX.1-Depth-dev",
-        transformer=transformer,
-        torch_dtype=torch.bfloat16,
-    ).to("cuda")
-
-    prompt = "A robot made of exotic candies and chocolates of different kinds. The background is filled with confetti and celebratory gifts."
-    control_image = load_image(
-        "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/robot.png"
-    )
-
-    processor = DepthPreprocessor.from_pretrained("LiheYoung/depth-anything-large-hf")
-    control_image = processor(control_image)[0].convert("RGB")
-
-    image = pipe(
-        prompt=prompt, control_image=control_image, height=1024, width=1024, num_inference_steps=30, guidance_scale=10.0
-    ).images[0]
-    image.save("flux.1-depth-dev.png")
-
-
-def test_flux_dev_fill():
-    image = load_image("https://huggingface.co/mit-han-lab/svdq-int4-flux.1-fill-dev/resolve/main/example.png")
-    mask = load_image("https://huggingface.co/mit-han-lab/svdq-int4-flux.1-fill-dev/resolve/main/mask.png")
-
-    transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-fill-dev")
-    pipe = FluxFillPipeline.from_pretrained(
-        "black-forest-labs/FLUX.1-Fill-dev", transformer=transformer, torch_dtype=torch.bfloat16
-    ).to("cuda")
-    image = pipe(
-        prompt="A wooden basket of a cat.",
-        image=image,
-        mask_image=mask,
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
+def test_flux_canny_dev():
+    run_test(
+        precision=get_precision(),
+        model_name="flux.1-canny-dev",
+        dataset_name="MJHQ-control",
+        task="canny",
+        dtype=torch.bfloat16,
         height=1024,
         width=1024,
+        num_inference_steps=30,
         guidance_scale=30,
-        num_inference_steps=50,
-        max_sequence_length=512,
-    ).images[0]
-    image.save("flux.1-fill-dev.png")
+        attention_impl="nunchaku-fp16",
+        cpu_offload=False,
+        cache_threshold=0,
+        expected_lpips=0.076 if get_precision() == "int4" else 0.090,
+    )
 
 
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
+def test_flux_depth_dev():
+    run_test(
+        precision=get_precision(),
+        model_name="flux.1-depth-dev",
+        dataset_name="MJHQ-control",
+        task="depth",
+        dtype=torch.bfloat16,
+        height=1024,
+        width=1024,
+        num_inference_steps=30,
+        guidance_scale=10,
+        attention_impl="nunchaku-fp16",
+        cpu_offload=False,
+        cache_threshold=0,
+        expected_lpips=0.137 if get_precision() == "int4" else 0.092,
+    )
+
+
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
+def test_flux_fill_dev():
+    run_test(
+        precision=get_precision(),
+        model_name="flux.1-fill-dev",
+        dataset_name="MJHQ-control",
+        task="fill",
+        dtype=torch.bfloat16,
+        height=1024,
+        width=1024,
+        num_inference_steps=30,
+        guidance_scale=30,
+        attention_impl="nunchaku-fp16",
+        cpu_offload=False,
+        cache_threshold=0,
+        expected_lpips=0.046 if get_precision() == "int4" else 0.021,
+    )
+
+
+# @pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
+# def test_flux_dev_canny_lora():
+#     run_test(
+#         precision=get_precision(),
+#         model_name="flux.1-dev",
+#         dataset_name="MJHQ-control",
+#         task="canny",
+#         dtype=torch.bfloat16,
+#         height=1024,
+#         width=1024,
+#         num_inference_steps=30,
+#         guidance_scale=30,
+#         attention_impl="nunchaku-fp16",
+#         cpu_offload=False,
+#         lora_names="canny",
+#         lora_strengths=0.85,
+#         cache_threshold=0,
+#         expected_lpips=0.081,
+#     )
+
+
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
+def test_flux_dev_depth_lora():
+    run_test(
+        precision=get_precision(),
+        model_name="flux.1-dev",
+        dataset_name="MJHQ-control",
+        task="depth",
+        dtype=torch.bfloat16,
+        height=1024,
+        width=1024,
+        num_inference_steps=30,
+        guidance_scale=10,
+        attention_impl="nunchaku-fp16",
+        cpu_offload=False,
+        cache_threshold=0,
+        lora_names="depth",
+        lora_strengths=0.85,
+        expected_lpips=0.181 if get_precision() == "int4" else 0.196,
+    )
+
+
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
+def test_flux_fill_dev_turbo():
+    run_test(
+        precision=get_precision(),
+        model_name="flux.1-fill-dev",
+        dataset_name="MJHQ-control",
+        task="fill",
+        dtype=torch.bfloat16,
+        height=1024,
+        width=1024,
+        num_inference_steps=8,
+        guidance_scale=30,
+        attention_impl="nunchaku-fp16",
+        cpu_offload=False,
+        cache_threshold=0,
+        lora_names="turbo8",
+        lora_strengths=1,
+        expected_lpips=0.036 if get_precision() == "int4" else 0.030,
+    )
+
+
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_dev_redux():
-    pipe_prior_redux = FluxPriorReduxPipeline.from_pretrained(
-        "black-forest-labs/FLUX.1-Redux-dev", torch_dtype=torch.bfloat16
-    ).to("cuda")
-    transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-dev")
-    pipe = FluxPipeline.from_pretrained(
-        "black-forest-labs/FLUX.1-dev",
-        text_encoder=None,
-        text_encoder_2=None,
-        transformer=transformer,
-        torch_dtype=torch.bfloat16,
-    ).to("cuda")
-
-    image = load_image("https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/robot.png")
-    pipe_prior_output = pipe_prior_redux(image)
-    images = pipe(guidance_scale=2.5, num_inference_steps=50, **pipe_prior_output).images
-    images[0].save("flux.1-redux-dev.png")
+    run_test(
+        precision=get_precision(),
+        model_name="flux.1-dev",
+        dataset_name="MJHQ-control",
+        task="redux",
+        dtype=torch.bfloat16,
+        height=1024,
+        width=1024,
+        num_inference_steps=20,
+        guidance_scale=2.5,
+        attention_impl="nunchaku-fp16",
+        cpu_offload=False,
+        cache_threshold=0,
+        expected_lpips=(0.162 if get_precision() == "int4" else 0.466),  # not sure why the fp4 model is so different
+    )

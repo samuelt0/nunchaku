@@ -9,7 +9,7 @@
 class QuantizedSanaModel : public ModuleWrapper<SanaModel> {
 public:
     void init(pybind11::dict config, std::vector<int> pag_layers, bool use_fp4, bool bf16, int8_t deviceId) {
-        spdlog::info("Initializing QuantizedSanaModel");
+        spdlog::info("Initializing QuantizedSanaModel on device {}", deviceId);
         SanaConfig cfg{
             .num_layers = config["num_layers"].cast<int>(),
             .num_attention_heads = config["num_attention_heads"].cast<int>(),
@@ -19,21 +19,26 @@ public:
             .pag_layers = pag_layers,
             .use_fp4 = use_fp4,
         };
+
+        ModuleWrapper::init(deviceId);
+        CUDADeviceContext ctx(this->deviceId);
         net = std::make_unique<SanaModel>(cfg, bf16 ? Tensor::BF16 : Tensor::FP16, Device::cuda((int)deviceId));
     }
 
     torch::Tensor forward(
-        torch::Tensor hidden_states, 
-        torch::Tensor encoder_hidden_states, 
-        torch::Tensor timestep, 
-        torch::Tensor cu_seqlens_img, 
-        torch::Tensor cu_seqlens_txt, 
-        int H, 
+        torch::Tensor hidden_states,
+        torch::Tensor encoder_hidden_states,
+        torch::Tensor timestep,
+        torch::Tensor cu_seqlens_img,
+        torch::Tensor cu_seqlens_txt,
+        int H,
         int W,
-        bool pag, 
-        bool cfg) 
+        bool pag,
+        bool cfg,
+        bool skip_first_layer = false)
     {
         checkModel();
+        CUDADeviceContext ctx(deviceId);
 
         spdlog::debug("QuantizedSanaModel forward");
 
@@ -50,7 +55,8 @@ public:
             from_torch(cu_seqlens_img),
             from_torch(cu_seqlens_txt),
             H, W,
-            pag, cfg
+            pag, cfg,
+            skip_first_layer
         );
 
         torch::Tensor output = to_torch(result);
@@ -61,17 +67,18 @@ public:
 
     torch::Tensor forward_layer(
         int64_t idx,
-        torch::Tensor hidden_states, 
-        torch::Tensor encoder_hidden_states, 
-        torch::Tensor timestep, 
-        torch::Tensor cu_seqlens_img, 
-        torch::Tensor cu_seqlens_txt, 
-        int H, 
+        torch::Tensor hidden_states,
+        torch::Tensor encoder_hidden_states,
+        torch::Tensor timestep,
+        torch::Tensor cu_seqlens_img,
+        torch::Tensor cu_seqlens_txt,
+        int H,
         int W,
-        bool pag, 
-        bool cfg) 
+        bool pag,
+        bool cfg)
     {
         checkModel();
+        CUDADeviceContext ctx(deviceId);
 
         spdlog::debug("QuantizedSanaModel forward_layer {}", idx);
 

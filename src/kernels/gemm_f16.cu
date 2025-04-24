@@ -41,13 +41,13 @@ Tensor gemm_f16(Tensor input,  // FP16
         using Gemm = cutlass::gemm::device::Gemm<
             ElementInputA, cutlass::layout::RowMajor, ElementInputB, cutlass::layout::ColumnMajor,
             ElementOutput, cutlass::layout::RowMajor, ElementAccumulator,
-            cutlass::arch::OpClassTensorOp, cutlass::arch::Sm80,
-            cutlass::gemm::GemmShape<128, 128, 64>,
-            cutlass::gemm::GemmShape<32, 64, 64>, cutlass::gemm::GemmShape<16, 8, 16>,
-            cutlass::epilogue::thread::LinearCombination<
-                ElementOutput, 128 / cutlass::sizeof_bits<ElementOutput>::value,
-                ElementAccumulator, ElementComputeEpilogue>,
-            cutlass::gemm::threadblock::GemmIdentityThreadblockSwizzle<>, 3>;
+            cutlass::arch::OpClassTensorOp, cutlass::arch::Sm75>;
+            // cutlass::gemm::GemmShape<128, 128, 64>,
+            // cutlass::gemm::GemmShape<32, 64, 64>, cutlass::gemm::GemmShape<16, 8, 16>,
+            // cutlass::epilogue::thread::LinearCombination<
+            //     ElementOutput, 128 / cutlass::sizeof_bits<ElementOutput>::value,
+            //     ElementAccumulator, ElementComputeEpilogue>,
+            // cutlass::gemm::threadblock::GemmIdentityThreadblockSwizzle<>, 3>;
 
         auto input_size = cutlass::MatrixCoord(M, K);
         auto weight_size = cutlass::MatrixCoord(K, N);

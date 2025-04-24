@@ -1,13 +1,14 @@
 from typing import Any, Callable
 
 import torch
-import torchvision.utils
 from diffusers.pipelines.flux.pipeline_flux import FluxPipeline, FluxPipelineOutput, FluxTransformer2DModel
 from einops import rearrange
 from peft.tuners import lora
 from PIL import Image
 from torch import nn
 from torchvision.transforms import functional as F
+
+from nunchaku.utils import load_state_dict_in_safetensors
 
 
 class FluxPix2pixTurboPipeline(FluxPipeline):
@@ -55,7 +56,9 @@ class FluxPix2pixTurboPipeline(FluxPipeline):
             self.load_lora_into_transformer(state_dict, {}, transformer=transformer)
         else:
             assert svdq_lora_path is not None
-            self.transformer.update_lora_params(svdq_lora_path)
+            sd = load_state_dict_in_safetensors(svdq_lora_path)
+            sd = {k: v for k, v in sd.items() if not k.startswith("transformer.")}
+            self.transformer.update_lora_params(sd)
         self.update_alpha(alpha)
 
     @torch.no_grad()

@@ -188,6 +188,12 @@ static void ldmatrix(const void *ptr, uint4 &out) {
     );
 }
 
+template<typename T>
+__device__ __forceinline__
+static T movmatrix(T x) {
+    asm volatile ("movmatrix.sync.aligned.m8n8.trans.b16 %0, %1;" : "=r"(*reinterpret_cast<uint32_t *>(&x)) : "r"(*reinterpret_cast<uint32_t *>(&x)));
+    return x;
+}
 
 // x in low bit, y in high bit
 template<int bitwidth, bool use_unsigned>
@@ -277,6 +283,13 @@ static float cuda_cos(float x) {
     return result;
 }
 
+__device__ __forceinline__
+static float cuda_exp2(float x) {
+    float result;
+    asm ("ex2.approx.ftz.f32 %0, %1;" : "=f"(result) : "f"(x));
+    return result;
+}
+
 // https://forums.developer.nvidia.com/t/hardware-accelerated-computation-of-the-sigmoid-logistic-function/266206
 __forceinline__ __device__ 
 static float cuda_sigmoidf (float a)
@@ -345,6 +358,14 @@ static void reduce_add(float *addr, float val) {
     asm volatile ("red.relaxed.gpu.global.add.f32 [%0], %1;" :: "l"(addr), "f"(val));
 }
 
+__device__ __forceinline__
+static void reduce_add_pred(float *addr, float val, bool pred) {
+    asm volatile (
+        "{ .reg .pred storepred; setp.ne.b32 storepred, %0, 0;"
+        "@storepred red.relaxed.gpu.global.add.f32 [%1], %2;"
+        "}" :: "r"((int)pred), "l"(addr), "f"(val));
+}
+
 template<int cnt, typename F>
 __device__ __forceinline__
 static void unrolled_loop(F &&lambda) {
@@ -362,6 +383,57 @@ static float int2float_fast(int val) {
     // fval = (val & 0x7FFFFF) ^ 0x4B400000
     asm volatile ("lop3.b32 %0, %1, %2, %3, %4;" : "=f"(fval) : "r"(val), "n"(0x7FFFFF), "n"(0x4B400000), "n"((0xF0 & 0xCC) ^ 0xAA));
     return fval - 12582912.0f;
+}
+
+template<typename To, typename From>
+__device__ __forceinline__
+static To bit_cast(const From &input) {
+    static_assert(sizeof(To) == sizeof(From));
+    // not safe but anyway
+    return *reinterpret_cast<const To *>(&input);
+}
+
+// both int2float and float2half are slow on sm_75 and before
+// val in [-8192, 8191], steps of 16, round to negative inf
+__device__ __forceinline__
+static half2 int2half2_fast_8192(int x, int y) {
+    uint32_t ival;
+    uint32_t hval;
+    // ival.lo = x.lo; ival.hi = y.lo;
+    asm volatile ("prmt.b32 %0, %1, %2, %3;" : "=r"(ival) : "r"(x), "r"(y), "n"(0x5410));
+    ival = ival >> 4;
+    // (val & 0x03FF03FF) ^ 0x76007600
+    asm volatile ("lop3.b32 %0, %1, %2, %3, %4;" : "=r"(hval) : "r"(ival), "n"(0x03FF03FF), "n"(0x76007600), "n"((0xF0 & 0xCC) ^ 0xAA));
+    return __hadd2(kernels::bit_cast<half2>(hval), half2(-24576.0f, -24576.0f));
+}
+// val in [-4096, 4095], steps of 8, round to nearest
+__device__ __forceinline__
+static half2 int2half2_fast_4096_rn(int x, int y) {
+    // x = max(min(x, 4095), -4096);
+    // y = max(min(y, 4095), -4096);
+    // TODO: round to even?
+    x = x * 8192 + 32768;
+    y = y * 8192 + 32768;
+    uint32_t ival;
+    uint32_t hval;
+    // ival.lo = x.hi; ival.hi = y.hi; 
+    // <=> divide x and y by 65536 and pack them
+    asm volatile ("prmt.b32 %0, %1, %2, %3;" : "=r"(ival) : "r"(x), "r"(y), "n"(0x7632));
+    // (val & 0x03FF03FF) ^ 0x72007200
+    asm volatile ("lop3.b32 %0, %1, %2, %3, %4;" : "=r"(hval) : "r"(ival), "n"(0x03FF03FF), "n"(0x72007200), "n"((0xF0 & 0xCC) ^ 0xAA));
+    return __hadd2(kernels::bit_cast<half2>(hval), half2(-12288.0f, -12288.0f));
+}
+// val in [-512, 511]
+__device__ __forceinline__
+static half2 int2half2_fast_512(int x, int y) {
+    uint32_t ival;
+    uint32_t hval;
+    // ival.lo = x.lo; ival.hi = y.lo; 
+    // <=> divide x and y by 65536 and pack them
+    asm volatile ("prmt.b32 %0, %1, %2, %3;" : "=r"(ival) : "r"(x), "r"(y), "n"(0x5410));
+    // (val & 0x03FF03FF) ^ 0x66006600
+    asm volatile ("lop3.b32 %0, %1, %2, %3, %4;" : "=r"(hval) : "r"(ival), "n"(0x03FF03FF), "n"(0x66006600), "n"((0xF0 & 0xCC) ^ 0xAA));
+    return __hadd2(kernels::bit_cast<half2>(hval), half2(-1536.0f, -1536.0f));
 }
 
 };  // namespace nunchaku::kernels

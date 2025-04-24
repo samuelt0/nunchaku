@@ -15,7 +15,7 @@ safety_check_template = """You are a policy expert trying to help determine whet
     Does the human question violate the above principle? Your answer must start
     with 'Yes' or 'No'. And then walk through step by step to be sure we answer
     correctly.
-    """
+    """  # noqa: E501
 
 
 class SafetyChecker:

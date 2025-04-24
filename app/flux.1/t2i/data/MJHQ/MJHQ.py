@@ -7,7 +7,7 @@ from PIL import Image
 
 _CITATION = """\
 @misc{li2024playground,
-      title={Playground v2.5: Three Insights towards Enhancing Aesthetic Quality in Text-to-Image Generation}, 
+      title={Playground v2.5: Three Insights towards Enhancing Aesthetic Quality in Text-to-Image Generation},
       author={Daiqing Li and Aleks Kamko and Ehsan Akhgari and Ali Sabet and Linmiao Xu and Suhail Doshi},
       year={2024},
       eprint={2402.17245},
@@ -17,7 +17,7 @@ _CITATION = """\
 """
 
 _DESCRIPTION = """\
-We introduce a new benchmark, MJHQ-30K, for automatic evaluation of a model’s aesthetic quality. 
+We introduce a new benchmark, MJHQ-30K, for automatic evaluation of a model’s aesthetic quality.
 The benchmark computes FID on a high-quality dataset to gauge aesthetic quality.
 """
 

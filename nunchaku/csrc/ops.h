@@ -32,7 +32,11 @@ namespace nunchaku::ops {
         bool fuse_silu,
         bool fp4,
         float alpha,
-        std::optional<torch::Tensor> wcscales
+        std::optional<torch::Tensor> wcscales,
+        std::optional<torch::Tensor> out_q,          // packed attention [B, H, M, D]
+        std::optional<torch::Tensor> out_k,          // packed attention [B, H, M, D]
+        std::optional<torch::Tensor> out_v,          // packed attention [B, H, M, D]
+        int attn_tokens
     ) {
         spdlog::trace("running gemm_w4a4: ");
 
@@ -70,9 +74,29 @@ namespace nunchaku::ops {
             fuse_silu,
             fp4,
             alpha,
-            getTensor(wcscales)
+            getTensor(wcscales),
+            getTensor(out_q),
+            getTensor(out_k),
+            getTensor(out_v),
+            attn_tokens
         );
         // Tensor::synchronizeDevice();
+    }
+
+    void attention_fp16(
+        torch::Tensor q,   // packed [Batch, Head, TokensQ, HEAD_DIM]
+        torch::Tensor k,   // packed [Batch, Head, TokensKV, HEAD_DIM]
+        torch::Tensor v,   // packed [Batch, Head, TokensKV, HEAD_DIM]
+        torch::Tensor o,   // linear [Batch, TokensQ, Head * HEAD_DIM]
+        float scale
+    ) {
+        nunchaku::kernels::attention_fp16(
+            from_torch(q),
+            from_torch(k),
+            from_torch(v),
+            from_torch(o),
+            scale
+        );
     }
 
     torch::Tensor gemv_awq(
@@ -122,6 +146,36 @@ namespace nunchaku::ops {
         return output;
     }
 
+    void test_rmsnorm_rope(
+        torch::Tensor input, 
+        torch::Tensor output, 
+        torch::Tensor norm_q, 
+        torch::Tensor norm_k, 
+        torch::Tensor rotary_emb) 
+    {
+        nunchaku::kernels::test_rmsnorm_rope(
+            from_torch(input),
+            from_torch(output),
+            from_torch(norm_q),
+            from_torch(norm_k),
+            from_torch(rotary_emb)
+        );
+    }
 
+    void test_pack_qkv(
+        torch::Tensor input, 
+        torch::Tensor out_q, 
+        torch::Tensor out_k, 
+        torch::Tensor out_v, 
+        int numTokens) 
+    {
+        nunchaku::kernels::test_pack_qkv(
+            from_torch(input),
+            from_torch(out_q),
+            from_torch(out_k),
+            from_torch(out_v),
+            numTokens
+        );
+    }
     
 };
