@@ -47,7 +47,7 @@ def get_sm_targets() -> list[str]:
             sm = f"{capability[0]}{capability[1]}"
             if sm == "120" and support_sm120:
                 sm = "120a"
-            assert sm in ["80", "86", "89", "120a"], f"Unsupported SM {sm}"
+            assert sm in ["90","80", "86", "89", "120a"], f"Unsupported SM {sm}"
             if sm not in ret:
                 ret.append(sm)
     else:
