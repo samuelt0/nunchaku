@@ -1,4 +1,4 @@
-### ❗ Import Error: `ImportError: cannot import name 'to_diffusers' from 'nunchaku.lora.flux' (...)` (e.g., #250)
+### ❗ Import Error: `ImportError: cannot import name 'to_diffusers' from 'nunchaku.lora.flux' (...)` (e.g., mit-han-lab/nunchaku#250)
 This error usually indicates that the nunchaku library was not installed correctly. We’ve prepared step-by-step installation guides for Windows users:
 
 📺 [English tutorial](https://youtu.be/YHAVe-oM7U8?si=cM9zaby_aEHiFXk0) | 📺 [Chinese tutorial](https://www.bilibili.com/video/BV1BTocYjEk5/?share_source=copy_web&vd_source=8926212fef622f25cc95380515ac74ee) | 📖 [Corresponding Text guide](https://github.com/mit-han-lab/nunchaku/blob/main/docs/setup_windows.md)
@@ -31,13 +31,13 @@ Please also check the following common causes:
 * **You have a folder named `nunchaku` in your working directory.**
   Python may mistakenly load from that local folder instead of the installed library. Also, make sure your plugin folder under `custom_nodes` is named `ComfyUI-nunchaku`, not `nunchaku`.
 
-### ❗ Runtime Error: `Assertion failed: this->shape.dataExtent == other.shape.dataExtent, file ...Tensor.h` (e.g., #212)
+### ❗ Runtime Error: `Assertion failed: this->shape.dataExtent == other.shape.dataExtent, file ...Tensor.h` (e.g., mit-han-lab/nunchaku#212)
 This error is typically due to using the wrong model for your GPU.
 
 - If you're using a **Blackwell GPU (e.g., RTX 50-series)**, please use our **FP4** models.
 - For all other GPUs, use our **INT4** models.
 
-### ❗ System crash or blue screen (e.g., [#57](https://github.com/mit-han-lab/ComfyUI-nunchaku/issues/57))
+### ❗ System crash or blue screen (e.g., mit-han-lab/nunchaku#57))
 We have observed some cases where memory is not properly released after image generation, especially when using ComfyUI. This may lead to system instability or crashes.
 
 We’re actively investigating this issue. If you have experience or insights into memory management in ComfyUI, we would appreciate your help!
@@ -49,10 +49,10 @@ Try upgrading your CUDA driver and try setting the environment variable `NUNCHAK
 This behavior is due to minor precision noise introduced by the GPU’s accumulation order. Because modern GPUs execute operations out of order for better performance, small variations in output can occur, even with the same seed.
 Enforcing strict accumulation order would reduce this variability but significantly hurt performance, so we do not plan to change this behavior.
 
-### ❓ PuLID Support (e.g., #258)
+### ❓ PuLID Support (e.g., mit-han-lab/nunchaku#258)
 PuLID support is currently in development and will be included in the next major release.
 
-### ~~❗ Assertion Error: `Assertion failed: a.dtype() == b.dtype(), file ...misc_kernels.cu` (e.g., [#57](https://github.com/mit-han-lab/ComfyUI-nunchaku/issues/57))~~
+### ~~❗ Assertion Error: `Assertion failed: a.dtype() == b.dtype(), file ...misc_kernels.cu` (e.g., mit-han-lab/nunchaku#30))~~
 
 ~~At the moment, we **only support the 16-bit version of [ControlNet-Union-Pro](https://huggingface.co/Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro)**. Support for FP8 and other ControlNets is planned for a future release.~~ ✅ This issue has now been resolved.
 
