@@ -1,15 +1,20 @@
 import torch
-from diffusers import WanTransformer3DModel, WanPipeline
+from diffusers import WanPipeline
 from diffusers.utils import export_to_video
 from nunchaku import NunchakuWanTransformer3DModel
-
+    
 # Available models: Wan-AI/Wan2.1-T2V-14B-Diffusers, Wan-AI/Wan2.1-T2V-1.3B-Diffusers
-model_id = "Wan-AI/Wan2.1-T2V-14B-Diffusers"
-transformer = NunchakuWanTransformer3DModel.from_pretrained(
+repo = "Wan-AI/Wan2.1-T2V-14B-Diffusers"
+
+xf = NunchakuWanTransformer3DModel.from_zero(
+    repo_id=repo, device="cuda", torch_dtype=torch.bfloat16
+)
+
+transformer = NunchakuWanTransformer3DModel.from_zero(
     model_id, device="cuda", torch_dtype=torch.bfloat16,
 )
 pipe = WanPipeline.from_pretrained(model_id, transformer=transformer, torch_dtype=torch.bfloat16)
-pipe.to("cuda")
+pipe.to("cuda") 
 
 prompt = "A cat walks on the grass, realistic"
 negative_prompt = "Bright tones, overexposed, static, blurred details, subtitles, style, works, paintings, images, static, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, misshapen limbs, fused fingers, still picture, messy background, three legs, many people in the background, walking backwards"
@@ -19,7 +24,7 @@ output = pipe(
     negative_prompt=negative_prompt,
     height=480,
     width=832,
-    num_frames=16, #81
+    num_frames=81,
     guidance_scale=5.0
 ).frames[0]
-export_to_video(output, "wan-example.mp4", fps=15)
+export_to_video(output, "output.mp4", fps=15)

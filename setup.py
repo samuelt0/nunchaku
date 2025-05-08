@@ -141,6 +141,7 @@ if __name__ == "__main__":
             "src/Linear.cpp",
             *ncond("src/FluxModel.cpp"),
             *ncond("src/SanaModel.cpp"),
+            *ncond("src/WanModel.cpp"),
             "src/Serialization.cpp",
             "src/Module.cpp",
             *ncond("third_party/Block-Sparse-Attention/csrc/block_sparse_attn/src/flash_fwd_hdim64_fp16_sm80.cu"),

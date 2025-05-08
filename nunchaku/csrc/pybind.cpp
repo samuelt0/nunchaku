@@ -1,5 +1,6 @@
 #include "gemm.h"
 #include "gemm88.h"
+#include "wan.h"
 #include "flux.h"
 #include "sana.h"
 #include "ops.h"
@@ -9,6 +10,30 @@
 #include <pybind11/pybind11.h>
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
+        py::class_<QuantizedWanModel>(m, "QuantizedWanModel")
+        .def(py::init<>())
+        .def("init", &QuantizedWanModel::init,
+             py::arg("config"),
+             py::arg("use_fp4"),
+             py::arg("bf16"),
+             py::arg("deviceId")
+        )
+        .def("reset", &QuantizedWanModel::reset)
+        .def("load", &QuantizedWanModel::load,
+             py::arg("path"),
+             py::arg("partial") = false
+        )
+        .def("forward", &QuantizedWanModel::forward,
+             py::arg("hidden_states"),
+             py::arg("timestep"),
+             py::arg("encoder_hidden_states"),
+             py::arg("encoder_hidden_states_image") = torch::Tensor(),
+             py::arg("attention_kwargs") = torch::Tensor()
+        )
+        .def("startDebug", &QuantizedWanModel::startDebug)
+        .def("stopDebug", &QuantizedWanModel::stopDebug)
+        .def("getDebugResults", &QuantizedWanModel::getDebugResults)
+   ;
     py::class_<QuantizedFluxModel>(m, "QuantizedFluxModel")
         .def(py::init<>())
         .def("init", &QuantizedFluxModel::init,
@@ -71,7 +96,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         )
         .def("loadDict", &QuantizedSanaModel::loadDict,
             py::arg("dict"),
-            py::arg("partial") = false
+            py::arg("partial") = false  
         )
         .def("forward", &QuantizedSanaModel::forward)
         .def("forward_layer", &QuantizedSanaModel::forward_layer)

@@ -336,3 +336,103 @@ class FluxCachedTransformerBlocks(nn.Module):
         encoder_hidden_states_residual = encoder_hidden_states - original_encoder_hidden_states
 
         return hidden_states, encoder_hidden_states, hidden_states_residual, encoder_hidden_states_residual
+
+class WanCachedTransformerBlocks(nn.Module):
+    def __init__(
+        self,
+        *,
+        transformer=None,
+        residual_diff_threshold: float,
+        verbose: bool = False,
+    ):
+        super().__init__()
+        self.transformer = transformer
+        self.transformer_blocks = transformer.blocks
+        self.residual_diff_threshold = residual_diff_threshold
+        self.verbose = verbose
+
+    def update_threshold(self, residual_diff_threshold: float = 0.12):
+        self.residual_diff_threshold = residual_diff_threshold
+
+    def forward(
+        self,
+        hidden_states:    torch.Tensor,
+        encoder_hidden_states: torch.Tensor,
+        timestep_proj:    torch.Tensor,
+        rotary_emb:       torch.Tensor,
+    ) -> torch.Tensor:
+        batch_size = hidden_states.shape[0]
+
+        if self.residual_diff_threshold <= 0.0 or batch_size > 1:
+            if batch_size > 1:
+                print("WanCachedTransformerBlocks: batch_size > 1 not cached")
+            return self._run_full_transformer(
+                hidden_states, encoder_hidden_states, timestep_proj, rotary_emb
+            )
+
+        original_hidden_states = hidden_states
+        first_block = self.transformer_blocks[0]
+        hidden_states = first_block(
+            hidden_states, encoder_hidden_states, timestep_proj, rotary_emb
+        )
+        first_hidden_states_residual = hidden_states - original_hidden_states
+
+        can_use_cache = utils.get_can_use_cache(
+            first_hidden_states_residual,
+            threshold=self.residual_diff_threshold,
+            parallelized=getattr(self.transformer, "_is_parallelized", False),
+        )
+
+        torch._dynamo.graph_break()
+
+        if can_use_cache:
+            if self.verbose:
+                print("Wan cache hit")
+            del first_hidden_states_residual
+            hidden_states, _ = utils.apply_prev_hidden_states_residual(
+                hidden_states, None
+            )
+            return hidden_states
+
+        if self.verbose:
+            print("Wan cache miss running remaining blocks")
+        utils.set_buffer("first_hidden_states_residual", first_hidden_states_residual)
+        del first_hidden_states_residual
+
+        hidden_states, hidden_states_residual = self._run_remaining_transformer_blocks(
+            hidden_states, encoder_hidden_states, timestep_proj, rotary_emb
+        )
+
+        utils.set_buffer("hidden_states_residual", hidden_states_residual)
+        torch._dynamo.graph_break()
+        return hidden_states
+
+    def _run_full_transformer(
+        self,
+        hidden_states,
+        encoder_hidden_states,
+        timestep_proj,
+        rotary_emb,
+    ):
+        for block in self.transformer_blocks:
+            hidden_states = block(
+                hidden_states, encoder_hidden_states, timestep_proj, rotary_emb
+            )
+        return hidden_states
+
+    def _run_remaining_transformer_blocks(
+        self,
+        hidden_states,
+        encoder_hidden_states,
+        timestep_proj,
+        rotary_emb,
+    ):
+        original_hidden_states = hidden_states
+        for block in self.transformer_blocks[1:]:
+            hidden_states = block(
+                hidden_states, encoder_hidden_states, timestep_proj, rotary_emb
+            )
+
+        hidden_states = hidden_states.contiguous()
+        hidden_states_residual = hidden_states - original_hidden_states
+        return hidden_states, hidden_states_residual

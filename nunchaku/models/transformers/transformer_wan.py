@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union
+from typing import Optional
 
 import torch
 from diffusers import WanTransformer3DModel
@@ -12,75 +12,121 @@ from ...utils import get_precision
 from ..._C import QuantizedWanModel, utils as cutils
 
 
-def load_quantized_module(
-    path: str,
-    cfg: dict,
-    device: Union[str, torch.device] = "cuda",
-    bf16: bool = True,
-) -> QuantizedWanModel:
-    device = torch.device(device)
-    assert device.type == "cuda"
-    m = QuantizedWanModel()
-    cutils.disable_memory_auto_release()
-    m.init(cfg, bf16, 0 if device.index is None else device.index)
-    m.load(path)
-    return m
+
+class NunchakuWanTransformerBlocks(nn.Module):
+    def __init__(self, m: QuantizedWanModel, dtype: torch.dtype, device: str | torch.device):
+        super().__init__()
+        self.m = m
+        self.dtype = dtype        
+        self.device = device
+
+    def forward(
+        self,
+        hidden_states: torch.Tensor,           
+        encoder_hidden_states: torch.Tensor,   
+        timestep_proj: torch.Tensor,           
+        rotary_emb: torch.Tensor,              
+        skip_first_layer: Optional[bool] = False,
+    ) -> torch.Tensor:
+
+        batch_size = hidden_states.shape[0]
+        original_dtype = hidden_states.dtype
+        original_device  = hidden_states.device
+
+        hidden_states_t = hidden_states.to(self.dtype).to(self.device)
+        enc_states_t = encoder_hidden_states.to(self.dtype).to(self.device)
+        temb_t = timestep_proj.to(self.dtype).to(self.device)
+
+        result = self.m.forward(
+            hidden_states_t,   
+            temb_t,                     
+            enc_states_t,              
+            torch.Tensor().to(self.device),  
+            torch.Tensor().to(self.device),
+        )
+
+        return result.to(original_dtype).to(original_device)
+
+    def forward_layer_at(
+        self,
+        idx: int,
+        hidden_states: torch.Tensor,
+        encoder_hidden_states: torch.Tensor,
+        timestep_proj: torch.Tensor,
+        rotary_emb: torch.Tensor,
+    ) -> torch.Tensor:
+        original_dtype   = hidden_states.dtype
+        original_device  = hidden_states.device
+
+        hidden_states_t  = hidden_states.to(self.dtype).to(self.device)
+        enc_states_t     = encoder_hidden_states.to(self.dtype).to(self.device)
+        temb_t           = timestep_proj.to(self.dtype).to(self.device)
+
+        out = self.m.forward_layer( 
+            idx,
+            hidden_states_t,
+            temb_t,
+            enc_states_t,
+            torch.Tensor().to(self.device),
+        )
+
+        return out.to(original_dtype).to(original_device)
+
+    def __del__(self):
+        self.m.reset()
 
 
 class NunchakuWanTransformer3DModel(WanTransformer3DModel, NunchakuModelLoaderMixin):
     @classmethod
     @utils.validate_hf_hub_args
-    def from_pretrained(cls, pretrained_model_name_or_path: Union[str, os.PathLike], **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path: str | os.PathLike, **kwargs):
         device = kwargs.get("device", "cuda")
-        torch_dtype = kwargs.get("torch_dtype", torch.bfloat16)
-        precision = get_precision(kwargs.get("precision", "auto"), device, pretrained_model_name_or_path)
+        pag_layers = kwargs.get("pag_layers", [])
+        precision = get_precision(kwargs.get("precision", "auto"),
+                                    device,
+                                    pretrained_model_name_or_path)
 
-        transformer, unquantized_path, quantized_path = cls._build_model(
+        transformer, unquantized_part_path, transformer_block_path = cls._build_model(
             pretrained_model_name_or_path, **kwargs
         )
 
+        use_fp4 = precision == "fp4"
         quant_mod = load_quantized_module(
-            quantized_path,
-            transformer.config,
+            transformer,
+            transformer_block_path,
             device=device,
-            bf16=torch_dtype == torch.bfloat16,
+            use_fp4=use_fp4,
         )
+
         transformer.inject_quantized_module(quant_mod, device)
-        transformer.to_empty(device=device)
 
-        unquant_sd = load_file(unquantized_path)
-        transformer.load_state_dict(unquant_sd, strict=False)
+        unquantized_sd = load_file(unquantized_part_path)
+        transformer.load_state_dict(unquantized_sd, strict=False)
+
         return transformer
-
-    def inject_quantized_module(self, m: QuantizedWanModel, device: Union[str, torch.device] = "cuda"):
-        self.quant_module = m
-        self.device_for_quant = device
+        
+    def inject_quantized_module(self, m: QuantizedWanModel, device: str | torch.device = "cuda"):
+        self.blocks = torch.nn.ModuleList([NunchakuWanTransformerBlocks(m, self.dtype, device)])
         return self
 
-    def forward(
-        self,
-        hidden_states: torch.Tensor,
-        timestep: torch.LongTensor,
-        encoder_hidden_states: torch.Tensor,
-        encoder_hidden_states_image: Optional[torch.Tensor] = None,
-        return_dict: bool = True,
-        **kwargs,
-    ):
-        orig_dtype, orig_device = hidden_states.dtype, hidden_states.device
 
-        hs = hidden_states.to(self.dtype).to(self.device_for_quant)
-        ts = timestep.to(self.dtype).to(self.device_for_quant)
-        txt = encoder_hidden_states.to(self.dtype).to(self.device_for_quant)
-        img = (
-            encoder_hidden_states_image.to(self.dtype).to(self.device_for_quant)
-            if encoder_hidden_states_image is not None
-            else None
-        )
+def load_quantized_module(
+    net: WanTransformer3DModel,
+    path: str,
+    device: str | torch.device = "cuda",
+    use_fp4: bool = False,
+) -> QuantizedWanModel:
+    device = torch.device(device)
+    assert device.type == "cuda"
 
-        out = self.quant_module.forward(hs, ts, txt, img).to(orig_dtype).to(orig_device)
+    m = QuantizedWanModel()
+    cutils.disable_memory_auto_release()
+    m.init(net.config, use_fp4, net.dtype == torch.bfloat16, 0 if device.index is None else device.index)
+    m.load(path)
+    return m
 
-        if not return_dict:
-            return (out,)
-        from diffusers.models.modeling_outputs import Transformer2DModelOutput
-
-        return Transformer2DModelOutput(sample=out)
+def inject_quantized_module(
+    net: WanTransformer3DModel, m: QuantizedWanModel, device: torch.device
+) -> WanTransformer3DModel:
+    net.blocks = torch.nn.ModuleList([NunchakuWanTransformerBlocks(m, net.dtype, device)])
+    return net
