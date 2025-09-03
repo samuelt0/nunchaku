@@ -1,6 +1,7 @@
 from typing import Optional, Tuple
 
 import torch
+import torch.nn.functional as F
 from diffusers.models.normalization import AdaLayerNormZero, AdaLayerNormZeroSingle
 
 from .linear import AWQW4A16Linear
@@ -70,3 +71,34 @@ class NunchakuAdaLayerNormZeroSingle(AdaLayerNormZeroSingle):
         norm_x = self.norm(x)
         norm_x_scaled = norm_x * scale_msa[:, None] + shift_msa[:, None]
         return norm_x_scaled, gate_msa
+
+
+class FP32LayerNorm(torch.nn.LayerNorm):
+    """
+    LayerNorm that always runs in FP32 precision for numerical stability.
+    This is particularly important for quantized models where mixed precision
+    can lead to numerical instabilities.
+    """
+    
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass with FP32 precision.
+        
+        Parameters
+        ----------
+        inputs : torch.Tensor
+            Input tensor to normalize.
+            
+        Returns
+        -------
+        torch.Tensor
+            Normalized tensor in the original dtype.
+        """
+        origin_dtype = inputs.dtype
+        return F.layer_norm(
+            inputs.float(),
+            self.normalized_shape,
+            self.weight.float() if self.weight is not None else None,
+            self.bias.float() if self.bias is not None else None,
+            self.eps,
+        ).to(origin_dtype)
