@@ -407,6 +407,9 @@ def convert_to_nunchaku_wan_transformer_block_state_dict(
 ) -> dict[str, torch.Tensor]:
     """Convert a Wan transformer block to Nunchaku format."""
     
+    # Check if we have indexed cross-attention projections (qkv_proj_context_0/1/2)
+    has_indexed_context = (f"{block_name}.qkv_proj_context_0.weight" in state_dict)
+    
     # Build local_name_map dynamically based on what exists in the model
     local_name_map = {
         # Self-attention components
@@ -414,8 +417,7 @@ def convert_to_nunchaku_wan_transformer_block_state_dict(
         "norm_q": "attn1.norm_q",
         "norm_k": "attn1.norm_k",
         "out_proj": "attn1.to_out.0",
-        # Cross-attention components  
-        "qkv_proj_context": ["attn2.to_q", "attn2.to_k", "attn2.to_v"],
+        # Cross-attention components - handle indexed and non-indexed
         "norm_q_context": "attn2.norm_q",
         "norm_k_context": "attn2.norm_k",
         "out_proj_context": "attn2.to_out.0",
@@ -424,11 +426,72 @@ def convert_to_nunchaku_wan_transformer_block_state_dict(
         "mlp_fc2": "ffn.net.2",
     }
     
+    if has_indexed_context:
+        # Handle indexed projections separately for mixed quantization
+        # Q is quantized, K/V are NOT quantized
+        local_name_map["qkv_proj_context_0"] = "attn2.to_q"  # Q - will be quantized
+        local_name_map["qkv_proj_context_1"] = "attn2.to_k"  # K - keep as float
+        local_name_map["qkv_proj_context_2"] = "attn2.to_v"  # V - keep as float
+    else:
+        # Handle non-indexed (legacy format)
+        local_name_map["qkv_proj_context"] = ["attn2.to_q", "attn2.to_k", "attn2.to_v"]
+    
     # Check if I2V components exist and add them if present
     if f"{block_name}.attn2.add_k_proj.weight" in state_dict:
         local_name_map["add_kv_proj"] = ["attn2.add_k_proj", "attn2.add_v_proj"]
     if f"{block_name}.attn2.norm_added_k.weight" in state_dict:
         local_name_map["norm_added_k"] = "attn2.norm_added_k"
+    
+    # Build convert_map based on whether we have indexed context projections
+    convert_map = {
+        "qkv_proj": "linear",  # Self-attention - all quantized
+        "norm_q": "",  # Unquantized norm layer
+        "norm_k": "",  # Unquantized norm layer
+        "out_proj": "linear",
+        "norm_q_context": "",  # Unquantized norm layer
+        "norm_k_context": "",  # Unquantized norm layer
+        "out_proj_context": "linear",
+        "mlp_fc1": "linear",
+        "mlp_fc2": "linear",
+    }
+    
+    smooth_name_map = {
+        "qkv_proj": "attn1.to_q",
+        "out_proj": "attn1.to_out.0",
+        "out_proj_context": "attn2.to_out.0",
+        "mlp_fc1": "ffn.net.0.proj",
+        "mlp_fc2": "ffn.net.2",
+    }
+    
+    branch_name_map = {
+        "qkv_proj": "attn1.to_q",
+        "out_proj": "attn1.to_out.0",
+        "out_proj_context": "attn2.to_out.0",
+        "mlp_fc1": "ffn.net.0.proj",
+        "mlp_fc2": "ffn.net.2",
+    }
+    
+    if has_indexed_context:
+        # Mixed quantization for indexed cross-attention
+        convert_map["qkv_proj_context_0"] = "linear"  # Q - quantize
+        convert_map["qkv_proj_context_1"] = ""  # K - keep as float  
+        convert_map["qkv_proj_context_2"] = ""  # V - keep as float
+        
+        smooth_name_map["qkv_proj_context_0"] = "attn2.to_q"
+        branch_name_map["qkv_proj_context_0"] = "attn2.to_q"
+    else:
+        # Legacy format - all quantized
+        convert_map["qkv_proj_context"] = "linear"
+        smooth_name_map["qkv_proj_context"] = "attn2.to_q"
+        branch_name_map["qkv_proj_context"] = "attn2.to_q"
+    
+    # Handle I2V components if present
+    if f"{block_name}.add_k_proj.weight" in state_dict:
+        convert_map["add_kv_proj"] = ""  # Keep I2V K/V unquantized
+        smooth_name_map["add_kv_proj"] = "attn2.add_k_proj"
+        branch_name_map["add_kv_proj"] = "attn2.add_k_proj"
+    if f"{block_name}.norm_added_k.weight" in state_dict:
+        convert_map["norm_added_k"] = ""  # Unquantized norm layer
     
     return convert_to_nunchaku_transformer_block_state_dict(
         state_dict=state_dict,
@@ -437,38 +500,9 @@ def convert_to_nunchaku_wan_transformer_block_state_dict(
         branch_dict=branch_dict,
         block_name=block_name,
         local_name_map=local_name_map,
-        smooth_name_map={
-            "qkv_proj": "attn1.to_q",
-            "out_proj": "attn1.to_out.0",
-            "qkv_proj_context": "attn2.to_q",
-            "out_proj_context": "attn2.to_out.0",
-            "add_kv_proj": "attn2.add_k_proj",
-            "mlp_fc1": "ffn.net.0.proj",
-            "mlp_fc2": "ffn.net.2",
-        },
-        branch_name_map={
-            "qkv_proj": "attn1.to_q",
-            "out_proj": "attn1.to_out.0",
-            "qkv_proj_context": "attn2.to_q",
-            "out_proj_context": "attn2.to_out.0",
-            "add_kv_proj": "attn2.add_k_proj",
-            "mlp_fc1": "ffn.net.0.proj",
-            "mlp_fc2": "ffn.net.2",
-        },
-        convert_map={
-            "qkv_proj": "linear",
-            "norm_q": "",  # Unquantized norm layer
-            "norm_k": "",  # Unquantized norm layer
-            "out_proj": "linear",
-            "qkv_proj_context": "linear",
-            "norm_q_context": "",  # Unquantized norm layer
-            "norm_k_context": "",  # Unquantized norm layer
-            "out_proj_context": "linear",
-            "add_kv_proj": "linear",
-            "norm_added_k": "",  # Unquantized norm layer
-            "mlp_fc1": "linear",
-            "mlp_fc2": "linear",
-        },
+        smooth_name_map=smooth_name_map,
+        branch_name_map=branch_name_map,
+        convert_map=convert_map,
         float_point=float_point,
     )
 
