@@ -39,6 +39,7 @@ def get_sm_targets() -> list[str]:
         raise Exception("nvcc not found")
 
     support_sm120 = packaging_version.parse(nvcc_version) >= packaging_version.parse("12.8")
+    support_sm121 = packaging_version.parse(nvcc_version) >= packaging_version.parse("13.0")
 
     install_mode = os.getenv("NUNCHAKU_INSTALL_MODE", "FAST")
     if install_mode == "FAST":
@@ -55,7 +56,9 @@ def get_sm_targets() -> list[str]:
         assert install_mode == "ALL"
         ret = ["75", "80", "86", "89"]
         if support_sm120:
-            ret.extend(["120a", "121a"])
+            ret.extend(["120a"])
+        if support_sm121:
+            ret.extend(["121a"])
     return ret
 
 
