@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import torch
+import torch.nn as nn
 from diffusers.models.attention import FeedForward
 from diffusers.models.attention_processor import Attention
 from diffusers.models.transformers.transformer_z_image import FeedForward as ZImageFeedForward
@@ -16,12 +17,37 @@ from huggingface_hub import utils
 
 from nunchaku.models.unets.unet_sdxl import NunchakuSDXLFeedForward
 
-from ...utils import get_precision
+from ...utils import get_precision, pad_tensor
 from ..attention import NunchakuBaseAttention
 from ..attention_processors.zimage import NunchakuZSingleStreamAttnProcessor
+from ..embeddings import pack_rotemb
 from ..linear import SVDQW4A4Linear
 from ..utils import fuse_linears
 from .utils import NunchakuModelLoaderMixin, patch_scale_key
+
+
+class NunchakuZImageRopeHook:
+    """
+    Hook class for caching and substition of packed `freqs_cis` tensor.
+    """
+
+    def __init__(self):
+        self.packed_cache = {}
+
+    def __call__(self, module: nn.Module, input_args: tuple, input_kwargs: dict):
+        freqs_cis: torch.Tensor = input_kwargs.get("freqs_cis", None)
+        if freqs_cis is None:
+            return None
+        cache_key = freqs_cis.data_ptr()
+        packed_freqs_cis = self.packed_cache.get(cache_key, None)
+        if packed_freqs_cis is None:
+            packed_freqs_cis = torch.view_as_real(freqs_cis).unsqueeze(3)
+            packed_freqs_cis = torch.flip(packed_freqs_cis, dims=[-1])
+            packed_freqs_cis = pack_rotemb(pad_tensor(packed_freqs_cis, 256, 1))
+            self.packed_cache[cache_key] = packed_freqs_cis
+        new_input_kwargs = input_kwargs.copy()
+        new_input_kwargs["freqs_cis"] = packed_freqs_cis
+        return input_args, new_input_kwargs
 
 
 class NunchakuZImageAttention(NunchakuBaseAttention):
@@ -198,6 +224,7 @@ class NunchakuZImageTransformer2DModel(ZImageTransformer2DModel, NunchakuModelLo
             for _, block in enumerate(block_list):
                 block.feed_forward = _convert_z_image_ff(block.feed_forward)
 
+        self.skip_refiners = skip_refiners
         _patch_transformer_block(self.layers)
         if skip_refiners:
             _convert_feed_forward(self.noise_refiner)
@@ -206,6 +233,43 @@ class NunchakuZImageTransformer2DModel(ZImageTransformer2DModel, NunchakuModelLo
             _patch_transformer_block(self.noise_refiner)
             _patch_transformer_block(self.context_refiner)
         return self
+
+    def register_rope_hook(self, rope_hook: NunchakuZImageRopeHook):
+        self.rope_hook_handles = []
+        for _, ly in enumerate(self.layers):
+            self.rope_hook_handles.append(ly.attention.register_forward_pre_hook(rope_hook, with_kwargs=True))
+        if not self.skip_refiners:
+            for _, nr in enumerate(self.noise_refiner):
+                self.rope_hook_handles.append(nr.attention.register_forward_pre_hook(rope_hook, with_kwargs=True))
+            for _, cr in enumerate(self.context_refiner):
+                self.rope_hook_handles.append(cr.attention.register_forward_pre_hook(rope_hook, with_kwargs=True))
+
+    def unregister_rope_hook(self):
+        for h in self.rope_hook_handles:
+            h.remove()
+        self.rope_hook_handles.clear()
+
+    def forward(
+        self,
+        x: List[torch.Tensor],
+        t,
+        cap_feats: List[torch.Tensor],
+        patch_size=2,
+        f_patch_size=1,
+        return_dict: bool = True,
+    ):
+        """
+        Adapted from diffusers.models.transformers.transformer_z_image.ZImageTransformer2DModel#forward
+
+        Register pre-forward hooks for caching and substitution of packed `freqs_cis` tensor for all attention submodules and unregister after forwarding is done.
+        """
+        rope_hook = NunchakuZImageRopeHook()
+        self.register_rope_hook(rope_hook)
+        try:
+            return super().forward(x, t, cap_feats, patch_size, f_patch_size, return_dict)
+        finally:
+            self.unregister_rope_hook()
+            del rope_hook
 
     @classmethod
     @utils.validate_hf_hub_args

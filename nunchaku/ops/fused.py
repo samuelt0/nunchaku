@@ -3,6 +3,7 @@ High-performance fused operators for quantized neural network inference.
 """
 
 import torch
+from diffusers.models.normalization import RMSNorm as DiffUsersRMSNorm
 from torch.nn import RMSNorm
 
 from nunchaku.models.linear import SVDQW4A4Linear
@@ -124,8 +125,12 @@ def fused_qkv_norm_rottary(
     - C_in: input features
     - C_out: output features
     """
-    assert norm_q is None or isinstance(norm_q, RMSNorm)
-    assert norm_k is None or isinstance(norm_k, RMSNorm)
+    assert (
+        norm_q is None or isinstance(norm_q, RMSNorm) or (isinstance(norm_q, DiffUsersRMSNorm) and norm_q.bias is None)
+    )
+    assert (
+        norm_k is None or isinstance(norm_k, RMSNorm) or (isinstance(norm_k, DiffUsersRMSNorm) and norm_k.bias is None)
+    )
 
     batch_size, seq_len, channels = x.shape
     x = x.view(batch_size * seq_len, channels)
