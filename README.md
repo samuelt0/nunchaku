@@ -126,4 +126,4 @@ Nunchaku is also inspired by many open-source libraries, including (but not limi
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=nunchaku-tech/nunchaku&type=Date)](https://www.star-history.com/#nunchaku-tech/nunchaku&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=nunchaku-ai/nunchaku&type=Date)](https://www.star-history.com/#nunchaku-ai/nunchaku&Date)
