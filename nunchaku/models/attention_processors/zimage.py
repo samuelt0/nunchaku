@@ -8,8 +8,6 @@ import torch
 from diffusers.models.attention_dispatch import dispatch_attention_fn
 from diffusers.models.transformers.transformer_z_image import ZSingleStreamAttnProcessor
 
-from ...ops.fused import fused_qkv_norm_rottary
-
 
 class NunchakuZSingleStreamAttnProcessor(ZSingleStreamAttnProcessor):
     """
@@ -33,13 +31,8 @@ class NunchakuZSingleStreamAttnProcessor(ZSingleStreamAttnProcessor):
         """
         Forward pass of the attention module. Adapted from diffusers.models.transformers.transformer_z_image.ZSingleStreamAttnProcessor#__call__.
         """
-        qkv = fused_qkv_norm_rottary(
-            hidden_states,
-            attn.to_qkv,
-            attn.norm_q,
-            attn.norm_k,
-            freqs_cis,
-        )
+        qkv = attn.fused_module(hidden_states, freqs_cis)
+
         query, key, value = qkv.chunk(3, dim=-1)
         query = query.unflatten(-1, (attn.heads, -1))
         key = key.unflatten(-1, (attn.heads, -1))

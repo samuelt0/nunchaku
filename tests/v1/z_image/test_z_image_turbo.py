@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 import pytest
+import requests
 import torch
 from diffusers import ZImagePipeline
 
@@ -48,6 +49,7 @@ dataset = [
 ]
 
 
+@pytest.mark.skipif(is_turing(), reason="Turing GPUs. Skip tests.")
 @pytest.mark.parametrize(
     "rank,expected_lpips",
     [
@@ -110,3 +112,67 @@ def test_zimage_turbo(rank: int, expected_lpips: dict[str, float]):
     lpips = compute_lpips(save_dir_16bit, save_dir_nunchaku)
     print(f"lpips: {lpips}")
     assert lpips < expected_lpips[f"{precision}-{dtype_str}"] * 1.15
+
+
+def download_ref_images(local_save_dir, filenames):
+    for filename in filenames:
+        try:
+            url = f"https://huggingface.co/datasets/nunchaku-tech/test-data/resolve/main/inputs/test-ref-z-image-turbo-{filename}.png"
+            save_path = local_save_dir / f"{filename}.png"
+            response = requests.get(url, stream=True, timeout=10)
+            response.raise_for_status()
+            if not os.path.exists(local_save_dir):
+                os.makedirs(local_save_dir)
+            with open(save_path, "wb") as file:
+                for chunk in response.iter_content(chunk_size=2048):
+                    file.write(chunk)
+            print(f"ref image downloaded: url: {url}, save_path: {save_path}")
+        except Exception as e:
+            print(f"download ref image failed: {e}")
+
+
+@pytest.mark.parametrize(
+    "rank,expected_lpips",
+    [
+        (32, {"int4-fp16": 0.4}),
+        (128, {"int4-fp16": 0.38}),
+        (256, {"int4-fp16": 0.37}),
+    ],
+)
+def test_zimage_turbo_turing(rank: int, expected_lpips: dict[str, float]):
+    if f"{precision}-{dtype_str}" not in expected_lpips:
+        return
+
+    if not already_generate(save_dir_16bit, len(dataset)):
+        filenames = [d["filename"] for d in dataset]
+        download_ref_images(save_dir_16bit, filenames)
+
+    save_dir_nunchaku = (
+        Path("test_results") / "nunchaku" / model_name / f"{precision}_r{rank}-fp16" / f"{folder_name}-bs{batch_size}"
+    )
+    path = f"nunchaku-tech/nunchaku-z-image-turbo/svdq-{precision}_r{rank}-z-image-turbo.safetensors"
+    transformer = NunchakuZImageTransformer2DModel.from_pretrained(path, torch_dtype=torch_dtype)
+
+    pipe = ZImagePipeline.from_pretrained(repo_id, transformer=transformer, torch_dtype=torch_dtype)
+    pipe.enable_sequential_cpu_offload()
+
+    run_pipeline(
+        dataset=dataset,
+        batch_size=batch_size,
+        pipeline=pipe,
+        save_dir=save_dir_nunchaku,
+        forward_kwargs={
+            "width": width,
+            "height": height,
+            "num_inference_steps": num_inference_steps,
+            "guidance_scale": guidance_scale,
+        },
+    )
+    del transformer
+    del pipe
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    lpips = compute_lpips(save_dir_16bit, save_dir_nunchaku)
+    print(f"lpips: {lpips}")
+    assert lpips < expected_lpips[f"{precision}-fp16"] * 1.15
