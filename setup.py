@@ -51,7 +51,7 @@ def get_sm_targets() -> list[str]:
                 sm = sm + "a"
             if sm in ["121"] and support_sm121:
                 sm = sm + "a"
-            assert sm in ["75", "80", "86", "89", "120a", "121a"], f"Unsupported SM {sm}"
+            assert sm in ["75", "80", "86", "89", "120a", "121a", "100"], f"Unsupported SM {sm}"
             if sm not in ret:
                 ret.append(sm)
     else:

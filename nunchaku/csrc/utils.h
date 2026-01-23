@@ -36,4 +36,12 @@ void set_faster_i2f_mode(std::string mode) {
     kernels::set_faster_i2f_mode(mode);
 }
 
+void set_stub_fp4_gemm(bool enabled) {
+    kernels::set_stub_fp4_gemm(enabled);
+}
+
+bool get_stub_fp4_gemm() {
+    return kernels::get_stub_fp4_gemm();
+}
+
 }; // namespace nunchaku::utils

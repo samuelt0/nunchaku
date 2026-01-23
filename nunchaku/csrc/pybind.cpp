@@ -120,5 +120,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def("set_cuda_stack_limit", nunchaku::utils::set_cuda_stack_limit)
         .def("disable_memory_auto_release", nunchaku::utils::disable_memory_auto_release)
         .def("trim_memory", nunchaku::utils::trim_memory)
-        .def("set_faster_i2f_mode", nunchaku::utils::set_faster_i2f_mode);
+        .def("set_faster_i2f_mode", nunchaku::utils::set_faster_i2f_mode)
+        .def("set_stub_fp4_gemm", nunchaku::utils::set_stub_fp4_gemm)
+        .def("get_stub_fp4_gemm", nunchaku::utils::get_stub_fp4_gemm);
 }

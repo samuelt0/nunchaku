@@ -75,6 +75,10 @@ void attention_fp16(Tensor q, // packed [Batch, Head, TokensQ, HEAD_DIM]
 // EXPERIMENTAL, for sm_75
 void set_faster_i2f_mode(std::string mode);
 
+// Stub mode for profiling on unsupported hardware (e.g., B200 for FP4)
+void set_stub_fp4_gemm(bool enabled);
+bool get_stub_fp4_gemm();
+
 // FOR TEST ONLY
 void test_rmsnorm_rope(Tensor input, Tensor output, Tensor norm_q, Tensor norm_k, Tensor rotary_emb);
 void test_pack_qkv(Tensor input, Tensor out_q, Tensor out_k, Tensor out_v, int numTokens);

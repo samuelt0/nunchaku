@@ -3,6 +3,18 @@
 
 namespace nunchaku::kernels {
 
+// Global stub flag for profiling on unsupported hardware (e.g., B200 for FP4)
+static bool g_stub_fp4_gemm = false;
+
+void set_stub_fp4_gemm(bool enabled) {
+    g_stub_fp4_gemm = enabled;
+    spdlog::info("FP4 GEMM stub mode: {}", enabled ? "enabled" : "disabled");
+}
+
+bool get_stub_fp4_gemm() {
+    return g_stub_fp4_gemm;
+}
+
 // for sm_75 only
 struct FasterI2FMode {
     enum Mode {
@@ -60,6 +72,41 @@ void gemm_w4a4(Tensor act,            // packed act [M, K / 2]
                Tensor out_k, // packed attention [B, H, M, D]
                Tensor out_v, // packed attention [B, H, M, D]
                int attn_tokens) {
+    // Stub mode: skip FP4 GEMM, just zero the output tensors
+    if (fp4 && g_stub_fp4_gemm) {
+        if (out.valid()) {
+            cudaMemsetAsync(out.data_ptr(), 0, out.numel() * out.scalar_size(), getCurrentCUDAStream());
+        }
+        if (qout.valid()) {
+            cudaMemsetAsync(qout.data_ptr(), 0, qout.numel() * qout.scalar_size(), getCurrentCUDAStream());
+        }
+        if (oscales.valid()) {
+            cudaMemsetAsync(oscales.data_ptr(), 0, oscales.numel() * oscales.scalar_size(), getCurrentCUDAStream());
+        }
+        if (poolout.valid()) {
+            cudaMemsetAsync(poolout.data_ptr(), 0, poolout.numel() * poolout.scalar_size(), getCurrentCUDAStream());
+        }
+        if (out_vk.valid()) {
+            cudaMemsetAsync(out_vk.data_ptr(), 0, out_vk.numel() * out_vk.scalar_size(), getCurrentCUDAStream());
+        }
+        if (out_linearattn.valid()) {
+            cudaMemsetAsync(out_linearattn.data_ptr(), 0, out_linearattn.numel() * out_linearattn.scalar_size(), getCurrentCUDAStream());
+        }
+        if (out_q.valid()) {
+            cudaMemsetAsync(out_q.data_ptr(), 0, out_q.numel() * out_q.scalar_size(), getCurrentCUDAStream());
+        }
+        if (out_k.valid()) {
+            cudaMemsetAsync(out_k.data_ptr(), 0, out_k.numel() * out_k.scalar_size(), getCurrentCUDAStream());
+        }
+        if (out_v.valid()) {
+            cudaMemsetAsync(out_v.data_ptr(), 0, out_v.numel() * out_v.scalar_size(), getCurrentCUDAStream());
+        }
+        if (lora_act_out.valid()) {
+            cudaMemsetAsync(lora_act_out.data_ptr(), 0, lora_act_out.numel() * lora_act_out.scalar_size(), getCurrentCUDAStream());
+        }
+        return;
+    }
+
     Tensor::ScalarType dtype = Tensor::INVALID_SCALAR_TYPE;
     if (!fp4) {
         dtype = ascales.dtype();
@@ -118,6 +165,20 @@ void quantize_w4a4_act_fuse_lora(Tensor input,
                                  Tensor smooth,
                                  bool fuse_glu,
                                  bool fp4) {
+    // Stub mode: skip FP4 quantization, just zero the output tensors
+    if (fp4 && g_stub_fp4_gemm) {
+        if (output.valid()) {
+            cudaMemsetAsync(output.data_ptr(), 0, output.numel() * output.scalar_size(), getCurrentCUDAStream());
+        }
+        if (oscales.valid()) {
+            cudaMemsetAsync(oscales.data_ptr(), 0, oscales.numel() * oscales.scalar_size(), getCurrentCUDAStream());
+        }
+        if (lora_act_out.valid()) {
+            cudaMemsetAsync(lora_act_out.data_ptr(), 0, lora_act_out.numel() * lora_act_out.scalar_size(), getCurrentCUDAStream());
+        }
+        return;
+    }
+
     invoke_launch(input.dtype(), fp4, false, [&]<typename Config, bool USE_FP4>() {
         GEMM_W4A4_Launch<Config, USE_FP4>::quantize_w4a4_act_fuse_lora(
             input, output, oscales, lora_down, lora_act_out, smooth, fuse_glu, fp4);
