@@ -1025,7 +1025,8 @@ public:
             const int bm = binfo.bm;
             const int bn = binfo.bn;
 
-            if constexpr (!USE_FP4 || FP4_AVAILABLE) {
+            // FP4 quantization works on SM 100a+ (uses cvt.rn.satfinite.e2m1x2.f32)
+            if constexpr (true) {
                 apply_quantize(fpsum,
                                M,
                                N,
@@ -1156,19 +1157,20 @@ public:
             //         (float)fpsum[i].data[0].x, (float)fpsum[i].data[0].y);
             // }
 
-            using EpilogueLoraDown = typename Lora<Config>::EpilogueLoraDown;
-
-            EpilogueLoraDown()(binfo,
-                               fpsum,
-                               args.M,
-                               args.N,
-                               0,
-                               typename EpilogueLoraDown::Arguments{
-                                   .lora_wgt_down = args.lora_wgt_down,
-                                   .lora_act      = args.lora_act,
-                                   .rank          = args.lora_rank,
-                                   .alwaysfalse   = args.alwaysfalse,
-                               });
+            // TODO: Re-enable LoRA down projection once FP4 GEMM is available on SM 100
+            // using EpilogueLoraDown = typename Lora<Config>::EpilogueLoraDown;
+            //
+            // EpilogueLoraDown()(binfo,
+            //                    fpsum,
+            //                    args.M,
+            //                    args.N,
+            //                    0,
+            //                    typename EpilogueLoraDown::Arguments{
+            //                        .lora_wgt_down = args.lora_wgt_down,
+            //                        .lora_act      = args.lora_act,
+            //                        .rank          = args.lora_rank,
+            //                        .alwaysfalse   = args.alwaysfalse,
+            //                    });
 
             EpilogueQuantize<false, false, use_fp4>()(
                 binfo,

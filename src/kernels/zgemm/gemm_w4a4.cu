@@ -165,20 +165,6 @@ void quantize_w4a4_act_fuse_lora(Tensor input,
                                  Tensor smooth,
                                  bool fuse_glu,
                                  bool fp4) {
-    // Stub mode: skip FP4 quantization, just zero the output tensors
-    if (fp4 && g_stub_fp4_gemm) {
-        if (output.valid()) {
-            cudaMemsetAsync(output.data_ptr(), 0, output.numel() * output.scalar_size(), getCurrentCUDAStream());
-        }
-        if (oscales.valid()) {
-            cudaMemsetAsync(oscales.data_ptr(), 0, oscales.numel() * oscales.scalar_size(), getCurrentCUDAStream());
-        }
-        if (lora_act_out.valid()) {
-            cudaMemsetAsync(lora_act_out.data_ptr(), 0, lora_act_out.numel() * lora_act_out.scalar_size(), getCurrentCUDAStream());
-        }
-        return;
-    }
-
     invoke_launch(input.dtype(), fp4, false, [&]<typename Config, bool USE_FP4>() {
         GEMM_W4A4_Launch<Config, USE_FP4>::quantize_w4a4_act_fuse_lora(
             input, output, oscales, lora_down, lora_act_out, smooth, fuse_glu, fp4);
