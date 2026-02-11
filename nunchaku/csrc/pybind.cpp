@@ -111,6 +111,13 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def("attention_fp16", nunchaku::ops::attention_fp16)
         .def("gemm_awq", nunchaku::ops::gemm_awq)
         .def("gemv_awq", nunchaku::ops::gemv_awq)
+        .def("add", nunchaku::ops::add, "Element-wise addition")
+        .def("mul_add", nunchaku::ops::mul_add,
+             py::arg("x"), py::arg("scale"), py::arg("bias"),
+             "In-place mul_add: x = x * scale + bias")
+        .def("layernorm", nunchaku::ops::layernorm,
+             py::arg("out"), py::arg("input"), py::arg("weight"), py::arg("bias"), py::arg("epsilon"),
+             "Layer normalization: out = (input - mean) / sqrt(var + eps) * weight + bias")
 
         .def("test_rmsnorm_rope", nunchaku::ops::test_rmsnorm_rope)
         .def("test_pack_qkv", nunchaku::ops::test_pack_qkv);

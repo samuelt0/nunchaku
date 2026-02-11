@@ -1,0 +1,638 @@
+========================================
+Running: nsys profile -o add/add1 python scripts/profile_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 3072
+Started at: Sun Feb  1 21:48:49 UTC 2026
+----------------------------------------
+Profiling nunchaku add kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+Add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  3072
+  Total elements:  12,582,912
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  a (input):     [4096, 3072] torch.bfloat16
+  b (input):     [4096, 3072] torch.bfloat16
+  c (output):    [4096, 3072] torch.bfloat16
+
+Memory Traffic:
+  Read a:              25.17 MB (numel x 2 bytes)
+  Read b:              25.17 MB (numel x 2 bytes)
+  Write c:             25.17 MB (numel x 2 bytes)
+  ------------------------------------
+  Total read:          50.33 MB
+  Total write:         25.17 MB
+  Total:               75.50 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.1697 ms
+  Std:   0.0504 ms
+  Min:   0.1417 ms
+  Max:   0.6319 ms
+
+Bandwidth:
+  444.9 GB/s (5.6% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-9ed3.qdstrm'
+[1/1] [0%                          ] add1.nsys-rep[1/1] [0%                          ] add1.nsys-rep[1/1] [===22%                      ] add1.nsys-rep[1/1] [===23%                      ] add1.nsys-rep[1/1] [===24%                      ] add1.nsys-rep[1/1] [====25%                     ] add1.nsys-rep[1/1] [====26%                     ] add1.nsys-rep[1/1] [====27%                     ] add1.nsys-rep[1/1] [====28%                     ] add1.nsys-rep[1/1] [=====29%                    ] add1.nsys-rep[1/1] [=====30%                    ] add1.nsys-rep[1/1] [=====32%                    ] add1.nsys-rep[1/1] [======33%                   ] add1.nsys-rep[1/1] [======34%                   ] add1.nsys-rep[1/1] [======35%                   ] add1.nsys-rep[1/1] [=======36%                  ] add1.nsys-rep[1/1] [=======37%                  ] add1.nsys-rep[1/1] [=======38%                  ] add1.nsys-rep[1/1] [=======39%                  ] add1.nsys-rep[1/1] [========41%                 ] add1.nsys-rep[1/1] [============57%             ] add1.nsys-rep[1/1] [=============58%            ] add1.nsys-rep[1/1] [=============60%            ] add1.nsys-rep[1/1] [=================72%        ] add1.nsys-rep[1/1] [=================73%        ] add1.nsys-rep[1/1] [========================100%] add1.nsys-rep[1/1] [========================100%] add1.nsys-rep
+Generated:
+    /home/samuel/nunchaku/add/add1.nsys-rep
+Finished at: Sun Feb  1 21:49:04 UTC 2026
+
+========================================
+Running: nsys profile -o add/add2 python scripts/profile_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 8192 --hidden-dim 3072
+Started at: Sun Feb  1 21:49:04 UTC 2026
+----------------------------------------
+Profiling nunchaku add kernel...
+  Batch size: 1, Tokens: 8192, Effective tokens: 8192
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+Add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      8192
+  Hidden dim (K):  3072
+  Total elements:  25,165,824
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  a (input):     [8192, 3072] torch.bfloat16
+  b (input):     [8192, 3072] torch.bfloat16
+  c (output):    [8192, 3072] torch.bfloat16
+
+Memory Traffic:
+  Read a:              50.33 MB (numel x 2 bytes)
+  Read b:              50.33 MB (numel x 2 bytes)
+  Write c:             50.33 MB (numel x 2 bytes)
+  ------------------------------------
+  Total read:         100.66 MB
+  Total write:         50.33 MB
+  Total:              150.99 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.2246 ms
+  Std:   0.0196 ms
+  Min:   0.2103 ms
+  Max:   0.3899 ms
+
+Bandwidth:
+  672.2 GB/s (8.4% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-0e9c.qdstrm'
+[1/1] [0%                          ] add2.nsys-rep[1/1] [0%                          ] add2.nsys-rep[1/1] [0%                          ] add2.nsys-rep[1/1] [===22%                      ] add2.nsys-rep[1/1] [===23%                      ] add2.nsys-rep[1/1] [===24%                      ] add2.nsys-rep[1/1] [====25%                     ] add2.nsys-rep[1/1] [====26%                     ] add2.nsys-rep[1/1] [====27%                     ] add2.nsys-rep[1/1] [====28%                     ] add2.nsys-rep[1/1] [=====29%                    ] add2.nsys-rep[1/1] [=====30%                    ] add2.nsys-rep[1/1] [=====32%                    ] add2.nsys-rep[1/1] [======33%                   ] add2.nsys-rep[1/1] [======34%                   ] add2.nsys-rep[1/1] [======35%                   ] add2.nsys-rep[1/1] [=======36%                  ] add2.nsys-rep[1/1] [=======37%                  ] add2.nsys-rep[1/1] [=======38%                  ] add2.nsys-rep[1/1] [=======39%                  ] add2.nsys-rep[1/1] [=========44%                ] add2.nsys-rep[1/1] [=========46%                ] add2.nsys-rep[1/1] [=============58%            ] add2.nsys-rep[1/1] [=============60%            ] add2.nsys-rep[1/1] [=================73%        ] add2.nsys-rep[1/1] [========================100%] add2.nsys-rep[1/1] [========================100%] add2.nsys-rep
+Generated:
+    /home/samuel/nunchaku/add/add2.nsys-rep
+Finished at: Sun Feb  1 21:49:17 UTC 2026
+
+========================================
+Running: nsys profile -o add/add3 python scripts/profile_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 2048
+Started at: Sun Feb  1 21:49:17 UTC 2026
+----------------------------------------
+Profiling nunchaku add kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 2048
+  Clear L2 cache: True
+
+==========================================================================
+Add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  2048
+  Total elements:  8,388,608
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  a (input):     [4096, 2048] torch.bfloat16
+  b (input):     [4096, 2048] torch.bfloat16
+  c (output):    [4096, 2048] torch.bfloat16
+
+Memory Traffic:
+  Read a:              16.78 MB (numel x 2 bytes)
+  Read b:              16.78 MB (numel x 2 bytes)
+  Write c:             16.78 MB (numel x 2 bytes)
+  ------------------------------------
+  Total read:          33.55 MB
+  Total write:         16.78 MB
+  Total:               50.33 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.1211 ms
+  Std:   0.0193 ms
+  Min:   0.1086 ms
+  Max:   0.2839 ms
+
+Bandwidth:
+  415.5 GB/s (5.2% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-f7ed.qdstrm'
+[1/1] [0%                          ] add3.nsys-rep[1/1] [0%                          ] add3.nsys-rep[1/1] [0%                          ] add3.nsys-rep[1/1] [===22%                      ] add3.nsys-rep[1/1] [===23%                      ] add3.nsys-rep[1/1] [====25%                     ] add3.nsys-rep[1/1] [====26%                     ] add3.nsys-rep[1/1] [====27%                     ] add3.nsys-rep[1/1] [====28%                     ] add3.nsys-rep[1/1] [=====29%                    ] add3.nsys-rep[1/1] [=====30%                    ] add3.nsys-rep[1/1] [=====32%                    ] add3.nsys-rep[1/1] [======33%                   ] add3.nsys-rep[1/1] [======34%                   ] add3.nsys-rep[1/1] [======35%                   ] add3.nsys-rep[1/1] [=======36%                  ] add3.nsys-rep[1/1] [=======37%                  ] add3.nsys-rep[1/1] [=======38%                  ] add3.nsys-rep[1/1] [=======39%                  ] add3.nsys-rep[1/1] [========40%                 ] add3.nsys-rep[1/1] [=============58%            ] add3.nsys-rep[1/1] [=============60%            ] add3.nsys-rep[1/1] [=================73%        ] add3.nsys-rep[1/1] [========================100%] add3.nsys-rep[1/1] [========================100%] add3.nsys-rep
+Generated:
+    /home/samuel/nunchaku/add/add3.nsys-rep
+Finished at: Sun Feb  1 21:49:30 UTC 2026
+
+========================================
+Running: nsys profile -o add/add4 python scripts/profile_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 4096
+Started at: Sun Feb  1 21:49:30 UTC 2026
+----------------------------------------
+Profiling nunchaku add kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 4096
+  Clear L2 cache: True
+
+==========================================================================
+Add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  4096
+  Total elements:  16,777,216
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  a (input):     [4096, 4096] torch.bfloat16
+  b (input):     [4096, 4096] torch.bfloat16
+  c (output):    [4096, 4096] torch.bfloat16
+
+Memory Traffic:
+  Read a:              33.55 MB (numel x 2 bytes)
+  Read b:              33.55 MB (numel x 2 bytes)
+  Write c:             33.55 MB (numel x 2 bytes)
+  ------------------------------------
+  Total read:          67.11 MB
+  Total write:         33.55 MB
+  Total:              100.66 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.1553 ms
+  Std:   0.0230 ms
+  Min:   0.1446 ms
+  Max:   0.3687 ms
+
+Bandwidth:
+  648.1 GB/s (8.1% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-2204.qdstrm'
+[1/1] [0%                          ] add4.nsys-rep[1/1] [0%                          ] add4.nsys-rep[1/1] [0%                          ] add4.nsys-rep[1/1] [===22%                      ] add4.nsys-rep[1/1] [===23%                      ] add4.nsys-rep[1/1] [====25%                     ] add4.nsys-rep[1/1] [====26%                     ] add4.nsys-rep[1/1] [====27%                     ] add4.nsys-rep[1/1] [====28%                     ] add4.nsys-rep[1/1] [=====29%                    ] add4.nsys-rep[1/1] [=====30%                    ] add4.nsys-rep[1/1] [=====32%                    ] add4.nsys-rep[1/1] [======33%                   ] add4.nsys-rep[1/1] [======34%                   ] add4.nsys-rep[1/1] [======35%                   ] add4.nsys-rep[1/1] [=======36%                  ] add4.nsys-rep[1/1] [=======37%                  ] add4.nsys-rep[1/1] [=======38%                  ] add4.nsys-rep[1/1] [=======39%                  ] add4.nsys-rep[1/1] [========41%                 ] add4.nsys-rep[1/1] [=============58%            ] add4.nsys-rep[1/1] [=============60%            ] add4.nsys-rep[1/1] [=================73%        ] add4.nsys-rep[1/1] [========================100%] add4.nsys-rep[1/1] [========================100%] add4.nsys-rep
+Generated:
+    /home/samuel/nunchaku/add/add4.nsys-rep
+Finished at: Sun Feb  1 21:49:43 UTC 2026
+
+========================================
+Running: nsys profile -o add/add5 python scripts/profile_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 8192
+Started at: Sun Feb  1 21:49:43 UTC 2026
+----------------------------------------
+Profiling nunchaku add kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 8192
+  Clear L2 cache: True
+
+==========================================================================
+Add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  8192
+  Total elements:  33,554,432
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  a (input):     [4096, 8192] torch.bfloat16
+  b (input):     [4096, 8192] torch.bfloat16
+  c (output):    [4096, 8192] torch.bfloat16
+
+Memory Traffic:
+  Read a:              67.11 MB (numel x 2 bytes)
+  Read b:              67.11 MB (numel x 2 bytes)
+  Write c:             67.11 MB (numel x 2 bytes)
+  ------------------------------------
+  Total read:         134.22 MB
+  Total write:         67.11 MB
+  Total:              201.33 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.2607 ms
+  Std:   0.0188 ms
+  Min:   0.2461 ms
+  Max:   0.4144 ms
+
+Bandwidth:
+  772.3 GB/s (9.7% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-7985.qdstrm'
+[1/1] [0%                          ] add5.nsys-rep[1/1] [0%                          ] add5.nsys-rep[1/1] [0%                          ] add5.nsys-rep[1/1] [==21%                       ] add5.nsys-rep[1/1] [===22%                      ] add5.nsys-rep[1/1] [===23%                      ] add5.nsys-rep[1/1] [====25%                     ] add5.nsys-rep[1/1] [====26%                     ] add5.nsys-rep[1/1] [====27%                     ] add5.nsys-rep[1/1] [====28%                     ] add5.nsys-rep[1/1] [=====29%                    ] add5.nsys-rep[1/1] [=====30%                    ] add5.nsys-rep[1/1] [=====32%                    ] add5.nsys-rep[1/1] [======33%                   ] add5.nsys-rep[1/1] [======34%                   ] add5.nsys-rep[1/1] [======35%                   ] add5.nsys-rep[1/1] [=======36%                  ] add5.nsys-rep[1/1] [=======37%                  ] add5.nsys-rep[1/1] [=======38%                  ] add5.nsys-rep[1/1] [=======39%                  ] add5.nsys-rep[1/1] [=========45%                ] add5.nsys-rep[1/1] [=========46%                ] add5.nsys-rep[1/1] [==========47%               ] add5.nsys-rep[1/1] [============57%             ] add5.nsys-rep[1/1] [=============58%            ] add5.nsys-rep[1/1] [=============59%            ] add5.nsys-rep[1/1] [=================72%        ] add5.nsys-rep[1/1] [=================73%        ] add5.nsys-rep[1/1] [========================100%] add5.nsys-rep[1/1] [========================100%] add5.nsys-rep
+Generated:
+    /home/samuel/nunchaku/add/add5.nsys-rep
+Finished at: Sun Feb  1 21:49:56 UTC 2026
+
+========================================
+Running: nsys profile -o add/add6 python scripts/profile_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 4 --tokens 2048 --hidden-dim 3072
+Started at: Sun Feb  1 21:49:56 UTC 2026
+----------------------------------------
+Profiling nunchaku add kernel...
+  Batch size: 4, Tokens: 2048, Effective tokens: 8192
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+Add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      8192
+  Hidden dim (K):  3072
+  Total elements:  25,165,824
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  a (input):     [8192, 3072] torch.bfloat16
+  b (input):     [8192, 3072] torch.bfloat16
+  c (output):    [8192, 3072] torch.bfloat16
+
+Memory Traffic:
+  Read a:              50.33 MB (numel x 2 bytes)
+  Read b:              50.33 MB (numel x 2 bytes)
+  Write c:             50.33 MB (numel x 2 bytes)
+  ------------------------------------
+  Total read:         100.66 MB
+  Total write:         50.33 MB
+  Total:              150.99 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.2643 ms
+  Std:   0.0321 ms
+  Min:   0.2420 ms
+  Max:   0.5528 ms
+
+Bandwidth:
+  571.4 GB/s (7.1% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-2473.qdstrm'
+[1/1] [0%                          ] add6.nsys-rep[1/1] [0%                          ] add6.nsys-rep[1/1] [0%                          ] add6.nsys-rep[1/1] [==21%                       ] add6.nsys-rep[1/1] [===22%                      ] add6.nsys-rep[1/1] [===23%                      ] add6.nsys-rep[1/1] [===24%                      ] add6.nsys-rep[1/1] [====25%                     ] add6.nsys-rep[1/1] [====26%                     ] add6.nsys-rep[1/1] [====27%                     ] add6.nsys-rep[1/1] [====28%                     ] add6.nsys-rep[1/1] [=====29%                    ] add6.nsys-rep[1/1] [=====31%                    ] add6.nsys-rep[1/1] [=====32%                    ] add6.nsys-rep[1/1] [======33%                   ] add6.nsys-rep[1/1] [======34%                   ] add6.nsys-rep[1/1] [======35%                   ] add6.nsys-rep[1/1] [=======36%                  ] add6.nsys-rep[1/1] [=======37%                  ] add6.nsys-rep[1/1] [=======38%                  ] add6.nsys-rep[1/1] [========40%                 ] add6.nsys-rep[1/1] [============56%             ] add6.nsys-rep[1/1] [=============58%            ] add6.nsys-rep[1/1] [================69%         ] add6.nsys-rep[1/1] [=================73%        ] add6.nsys-rep[1/1] [========================100%] add6.nsys-rep[1/1] [========================100%] add6.nsys-rep
+Generated:
+    /home/samuel/nunchaku/add/add6.nsys-rep
+Finished at: Sun Feb  1 21:50:10 UTC 2026
+
+========================================
+Running: nsys profile -o add/add7 python scripts/profile_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 4 --tokens 4096 --hidden-dim 3072
+Started at: Sun Feb  1 21:50:10 UTC 2026
+----------------------------------------
+Profiling nunchaku add kernel...
+  Batch size: 4, Tokens: 4096, Effective tokens: 16384
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+Add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      16384
+  Hidden dim (K):  3072
+  Total elements:  50,331,648
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  a (input):     [16384, 3072] torch.bfloat16
+  b (input):     [16384, 3072] torch.bfloat16
+  c (output):    [16384, 3072] torch.bfloat16
+
+Memory Traffic:
+  Read a:             100.66 MB (numel x 2 bytes)
+  Read b:             100.66 MB (numel x 2 bytes)
+  Write c:            100.66 MB (numel x 2 bytes)
+  ------------------------------------
+  Total read:         201.33 MB
+  Total write:        100.66 MB
+  Total:              301.99 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.3819 ms
+  Std:   0.0277 ms
+  Min:   0.3493 ms
+  Max:   0.6079 ms
+
+Bandwidth:
+  790.8 GB/s (9.9% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-2d05.qdstrm'
+[1/1] [0%                          ] add7.nsys-rep[1/1] [0%                          ] add7.nsys-rep[1/1] [0%                          ] add7.nsys-rep[1/1] [===22%                      ] add7.nsys-rep[1/1] [===23%                      ] add7.nsys-rep[1/1] [===24%                      ] add7.nsys-rep[1/1] [====26%                     ] add7.nsys-rep[1/1] [====27%                     ] add7.nsys-rep[1/1] [====28%                     ] add7.nsys-rep[1/1] [=====29%                    ] add7.nsys-rep[1/1] [=====30%                    ] add7.nsys-rep[1/1] [=====31%                    ] add7.nsys-rep[1/1] [======33%                   ] add7.nsys-rep[1/1] [======34%                   ] add7.nsys-rep[1/1] [======35%                   ] add7.nsys-rep[1/1] [=======36%                  ] add7.nsys-rep[1/1] [=======37%                  ] add7.nsys-rep[1/1] [=======38%                  ] add7.nsys-rep[1/1] [=======39%                  ] add7.nsys-rep[1/1] [========40%                 ] add7.nsys-rep[1/1] [========41%                 ] add7.nsys-rep[1/1] [========42%                 ] add7.nsys-rep[1/1] [=============58%            ] add7.nsys-rep[1/1] [=============60%            ] add7.nsys-rep[1/1] [=================72%        ] add7.nsys-rep[1/1] [=================73%        ] add7.nsys-rep[1/1] [========================100%] add7.nsys-rep[1/1] [========================100%] add7.nsys-rep
+Generated:
+    /home/samuel/nunchaku/add/add7.nsys-rep
+Finished at: Sun Feb  1 21:50:23 UTC 2026
+
+========================================
+Running: nsys profile -o add/add8 python scripts/profile_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 4 --tokens 8192 --hidden-dim 3072
+Started at: Sun Feb  1 21:50:23 UTC 2026
+----------------------------------------
+Profiling nunchaku add kernel...
+  Batch size: 4, Tokens: 8192, Effective tokens: 32768
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+Add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      32768
+  Hidden dim (K):  3072
+  Total elements:  100,663,296
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  a (input):     [32768, 3072] torch.bfloat16
+  b (input):     [32768, 3072] torch.bfloat16
+  c (output):    [32768, 3072] torch.bfloat16
+
+Memory Traffic:
+  Read a:             201.33 MB (numel x 2 bytes)
+  Read b:             201.33 MB (numel x 2 bytes)
+  Write c:            201.33 MB (numel x 2 bytes)
+  ------------------------------------
+  Total read:         402.65 MB
+  Total write:        201.33 MB
+  Total:              603.98 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.6686 ms
+  Std:   0.0258 ms
+  Min:   0.6409 ms
+  Max:   0.8023 ms
+
+Bandwidth:
+  903.4 GB/s (11.3% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-fb44.qdstrm'
+[1/1] [0%                          ] add8.nsys-rep[1/1] [0%                          ] add8.nsys-rep[1/1] [0%                          ] add8.nsys-rep[1/1] [==21%                       ] add8.nsys-rep[1/1] [===22%                      ] add8.nsys-rep[1/1] [===23%                      ] add8.nsys-rep[1/1] [====25%                     ] add8.nsys-rep[1/1] [====26%                     ] add8.nsys-rep[1/1] [====27%                     ] add8.nsys-rep[1/1] [====28%                     ] add8.nsys-rep[1/1] [=====29%                    ] add8.nsys-rep[1/1] [=====31%                    ] add8.nsys-rep[1/1] [=====32%                    ] add8.nsys-rep[1/1] [======33%                   ] add8.nsys-rep[1/1] [======34%                   ] add8.nsys-rep[1/1] [======35%                   ] add8.nsys-rep[1/1] [=======36%                  ] add8.nsys-rep[1/1] [=======37%                  ] add8.nsys-rep[1/1] [========40%                 ] add8.nsys-rep[1/1] [========42%                 ] add8.nsys-rep[1/1] [============55%             ] add8.nsys-rep[1/1] [============56%             ] add8.nsys-rep[1/1] [=============58%            ] add8.nsys-rep[1/1] [================68%         ] add8.nsys-rep[1/1] [=================72%        ] add8.nsys-rep[1/1] [========================100%] add8.nsys-rep[1/1] [========================100%] add8.nsys-rep
+Generated:
+    /home/samuel/nunchaku/add/add8.nsys-rep
+Finished at: Sun Feb  1 21:50:37 UTC 2026
+
+========================================
+Running: nsys profile -o add/add9 python scripts/profile_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 16 --tokens 4096 --hidden-dim 3072
+Started at: Sun Feb  1 21:50:37 UTC 2026
+----------------------------------------
+Profiling nunchaku add kernel...
+  Batch size: 16, Tokens: 4096, Effective tokens: 65536
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+Add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      65536
+  Hidden dim (K):  3072
+  Total elements:  201,326,592
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  a (input):     [65536, 3072] torch.bfloat16
+  b (input):     [65536, 3072] torch.bfloat16
+  c (output):    [65536, 3072] torch.bfloat16
+
+Memory Traffic:
+  Read a:             402.65 MB (numel x 2 bytes)
+  Read b:             402.65 MB (numel x 2 bytes)
+  Write c:            402.65 MB (numel x 2 bytes)
+  ------------------------------------
+  Total read:         805.31 MB
+  Total write:        402.65 MB
+  Total:                1.21 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  1.3438 ms
+  Std:   0.0289 ms
+  Min:   1.3081 ms
+  Max:   1.5718 ms
+
+Bandwidth:
+  898.9 GB/s (11.2% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-9047.qdstrm'
+[1/1] [0%                          ] add9.nsys-rep[1/1] [0%                          ] add9.nsys-rep[1/1] [0%                          ] add9.nsys-rep[1/1] [==20%                       ] add9.nsys-rep[1/1] [==21%                       ] add9.nsys-rep[1/1] [===22%                      ] add9.nsys-rep[1/1] [===24%                      ] add9.nsys-rep[1/1] [====25%                     ] add9.nsys-rep[1/1] [====26%                     ] add9.nsys-rep[1/1] [====27%                     ] add9.nsys-rep[1/1] [====28%                     ] add9.nsys-rep[1/1] [=====30%                    ] add9.nsys-rep[1/1] [=====31%                    ] add9.nsys-rep[1/1] [=====32%                    ] add9.nsys-rep[1/1] [======33%                   ] add9.nsys-rep[1/1] [======34%                   ] add9.nsys-rep[1/1] [======35%                   ] add9.nsys-rep[1/1] [=======36%                  ] add9.nsys-rep[1/1] [=======38%                  ] add9.nsys-rep[1/1] [===========53%              ] add9.nsys-rep[1/1] [============55%             ] add9.nsys-rep[1/1] [===============65%          ] add9.nsys-rep[1/1] [================71%         ] add9.nsys-rep[1/1] [========================100%] add9.nsys-rep[1/1] [========================100%] add9.nsys-rep
+Generated:
+    /home/samuel/nunchaku/add/add9.nsys-rep
+Finished at: Sun Feb  1 21:50:51 UTC 2026
+
+========================================
+Running: nsys profile -o add/add10 python scripts/profile_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 16 --tokens 8192 --hidden-dim 3072
+Started at: Sun Feb  1 21:50:51 UTC 2026
+----------------------------------------
+Profiling nunchaku add kernel...
+  Batch size: 16, Tokens: 8192, Effective tokens: 131072
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+Add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      131072
+  Hidden dim (K):  3072
+  Total elements:  402,653,184
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  a (input):     [131072, 3072] torch.bfloat16
+  b (input):     [131072, 3072] torch.bfloat16
+  c (output):    [131072, 3072] torch.bfloat16
+
+Memory Traffic:
+  Read a:             805.31 MB (numel x 2 bytes)
+  Read b:             805.31 MB (numel x 2 bytes)
+  Write c:            805.31 MB (numel x 2 bytes)
+  ------------------------------------
+  Total read:           1.61 GB
+  Total write:        805.31 MB
+  Total:                2.42 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  2.6610 ms
+  Std:   0.0363 ms
+  Min:   2.6278 ms
+  Max:   2.9039 ms
+
+Bandwidth:
+  907.9 GB/s (11.3% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-969c.qdstrm'
+[1/1] [0%                          ] add10.nsys-rep[1/1] [0%                          ] add10.nsys-rep[1/1] [0%                          ] add10.nsys-rep[1/1] [==18%                       ] add10.nsys-rep[1/1] [==19%                       ] add10.nsys-rep[1/1] [==20%                       ] add10.nsys-rep[1/1] [==21%                       ] add10.nsys-rep[1/1] [===22%                      ] add10.nsys-rep[1/1] [===23%                      ] add10.nsys-rep[1/1] [===24%                      ] add10.nsys-rep[1/1] [====25%                     ] add10.nsys-rep[1/1] [====27%                     ] add10.nsys-rep[1/1] [====28%                     ] add10.nsys-rep[1/1] [=====29%                    ] add10.nsys-rep[1/1] [=====30%                    ] add10.nsys-rep[1/1] [=====31%                    ] add10.nsys-rep[1/1] [=====32%                    ] add10.nsys-rep[1/1] [======34%                   ] add10.nsys-rep[1/1] [==========48%               ] add10.nsys-rep[1/1] [===========50%              ] add10.nsys-rep[1/1] [=============59%            ] add10.nsys-rep[1/1] [================70%         ] add10.nsys-rep[1/1] [========================100%] add10.nsys-rep[1/1] [========================100%] add10.nsys-rep
+Generated:
+    /home/samuel/nunchaku/add/add10.nsys-rep
+Finished at: Sun Feb  1 21:51:04 UTC 2026
+
+========================================
+Running: nsys profile -o add/add11 python scripts/profile_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 64 --tokens 4096 --hidden-dim 3072
+Started at: Sun Feb  1 21:51:04 UTC 2026
+----------------------------------------
+Profiling nunchaku add kernel...
+  Batch size: 64, Tokens: 4096, Effective tokens: 262144
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+Add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      262144
+  Hidden dim (K):  3072
+  Total elements:  805,306,368
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  a (input):     [262144, 3072] torch.bfloat16
+  b (input):     [262144, 3072] torch.bfloat16
+  c (output):    [262144, 3072] torch.bfloat16
+
+Memory Traffic:
+  Read a:               1.61 GB (numel x 2 bytes)
+  Read b:               1.61 GB (numel x 2 bytes)
+  Write c:              1.61 GB (numel x 2 bytes)
+  ------------------------------------
+  Total read:           3.22 GB
+  Total write:          1.61 GB
+  Total:                4.83 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  5.3568 ms
+  Std:   0.1342 ms
+  Min:   5.0015 ms
+  Max:   5.5155 ms
+
+Bandwidth:
+  902.0 GB/s (11.3% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-175c.qdstrm'
+[1/1] [0%                          ] add11.nsys-rep[1/1] [0%                          ] add11.nsys-rep[1/1] [0%                          ] add11.nsys-rep[1/1] [=16%                        ] add11.nsys-rep[1/1] [=17%                        ] add11.nsys-rep[1/1] [==18%                       ] add11.nsys-rep[1/1] [==19%                       ] add11.nsys-rep[1/1] [==20%                       ] add11.nsys-rep[1/1] [==21%                       ] add11.nsys-rep[1/1] [===22%                      ] add11.nsys-rep[1/1] [===24%                      ] add11.nsys-rep[1/1] [====25%                     ] add11.nsys-rep[1/1] [====26%                     ] add11.nsys-rep[1/1] [====27%                     ] add11.nsys-rep[1/1] [====28%                     ] add11.nsys-rep[1/1] [=====29%                    ] add11.nsys-rep[1/1] [=====30%                    ] add11.nsys-rep[1/1] [========42%                 ] add11.nsys-rep[1/1] [=========44%                ] add11.nsys-rep[1/1] [===========51%              ] add11.nsys-rep[1/1] [==============63%           ] add11.nsys-rep[1/1] [===============67%          ] add11.nsys-rep[1/1] [========================100%] add11.nsys-rep[1/1] [========================100%] add11.nsys-rep
+Generated:
+    /home/samuel/nunchaku/add/add11.nsys-rep
+Finished at: Sun Feb  1 21:51:20 UTC 2026
+
+========================================
+Running: nsys profile -o add/add12 python scripts/profile_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 64 --tokens 8192 --hidden-dim 3072
+Started at: Sun Feb  1 21:51:20 UTC 2026
+----------------------------------------
+Profiling nunchaku add kernel...
+  Batch size: 64, Tokens: 8192, Effective tokens: 524288
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+Add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      524288
+  Hidden dim (K):  3072
+  Total elements:  1,610,612,736
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  a (input):     [524288, 3072] torch.bfloat16
+  b (input):     [524288, 3072] torch.bfloat16
+  c (output):    [524288, 3072] torch.bfloat16
+
+Memory Traffic:
+  Read a:               3.22 GB (numel x 2 bytes)
+  Read b:               3.22 GB (numel x 2 bytes)
+  Write c:              3.22 GB (numel x 2 bytes)
+  ------------------------------------
+  Total read:           6.44 GB
+  Total write:          3.22 GB
+  Total:                9.66 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  10.3759 ms
+  Std:   0.3630 ms
+  Min:   9.7214 ms
+  Max:   11.3377 ms
+
+Bandwidth:
+  931.4 GB/s (11.6% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-f7ea.qdstrm'
+[1/1] [0%                          ] add12.nsys-rep[1/1] [0%                          ] add12.nsys-rep[1/1] [0%                          ] add12.nsys-rep[1/1] [14%                         ] add12.nsys-rep[1/1] [13%                         ] add12.nsys-rep[1/1] [14%                         ] add12.nsys-rep[1/1] [=15%                        ] add12.nsys-rep[1/1] [=16%                        ] add12.nsys-rep[1/1] [=17%                        ] add12.nsys-rep[1/1] [==18%                       ] add12.nsys-rep[1/1] [==19%                       ] add12.nsys-rep[1/1] [==20%                       ] add12.nsys-rep[1/1] [==21%                       ] add12.nsys-rep[1/1] [===22%                      ] add12.nsys-rep[1/1] [===23%                      ] add12.nsys-rep[1/1] [===24%                      ] add12.nsys-rep[1/1] [======33%                   ] add12.nsys-rep[1/1] [=======38%                  ] add12.nsys-rep[1/1] [========40%                 ] add12.nsys-rep[1/1] [===========50%              ] add12.nsys-rep[1/1] [=============60%            ] add12.nsys-rep[1/1] [==============64%           ] add12.nsys-rep[1/1] [========================100%] add12.nsys-rep[1/1] [========================100%] add12.nsys-rep
+Generated:
+    /home/samuel/nunchaku/add/add12.nsys-rep
+Finished at: Sun Feb  1 21:51:36 UTC 2026
+
+========================================
+Running: nsys profile -o add/add13 python scripts/profile_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 16 --tokens 4096 --hidden-dim 8192
+Started at: Sun Feb  1 21:51:36 UTC 2026
+----------------------------------------
+Profiling nunchaku add kernel...
+  Batch size: 16, Tokens: 4096, Effective tokens: 65536
+  Hidden dim: 8192
+  Clear L2 cache: True
+
+==========================================================================
+Add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      65536
+  Hidden dim (K):  8192
+  Total elements:  536,870,912
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  a (input):     [65536, 8192] torch.bfloat16
+  b (input):     [65536, 8192] torch.bfloat16
+  c (output):    [65536, 8192] torch.bfloat16
+
+Memory Traffic:
+  Read a:               1.07 GB (numel x 2 bytes)
+  Read b:               1.07 GB (numel x 2 bytes)
+  Write c:              1.07 GB (numel x 2 bytes)
+  ------------------------------------
+  Total read:           2.15 GB
+  Total write:          1.07 GB
+  Total:                3.22 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  3.3437 ms
+  Std:   0.1184 ms
+  Min:   3.1852 ms
+  Max:   3.5038 ms
+
+Bandwidth:
+  963.4 GB/s (12.0% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-5c38.qdstrm'
+[1/1] [0%                          ] add13.nsys-rep[1/1] [0%                          ] add13.nsys-rep[1/1] [0%                          ] add13.nsys-rep[1/1] [==18%                       ] add13.nsys-rep[1/1] [==19%                       ] add13.nsys-rep[1/1] [==20%                       ] add13.nsys-rep[1/1] [==21%                       ] add13.nsys-rep[1/1] [===22%                      ] add13.nsys-rep[1/1] [===23%                      ] add13.nsys-rep[1/1] [===24%                      ] add13.nsys-rep[1/1] [====25%                     ] add13.nsys-rep[1/1] [====26%                     ] add13.nsys-rep[1/1] [====27%                     ] add13.nsys-rep[1/1] [====28%                     ] add13.nsys-rep[1/1] [=====29%                    ] add13.nsys-rep[1/1] [=====30%                    ] add13.nsys-rep[1/1] [=====31%                    ] add13.nsys-rep[1/1] [=======36%                  ] add13.nsys-rep[1/1] [=======37%                  ] add13.nsys-rep[1/1] [=========46%                ] add13.nsys-rep[1/1] [==========48%               ] add13.nsys-rep[1/1] [============57%             ] add13.nsys-rep[1/1] [================69%         ] add13.nsys-rep[1/1] [========================100%] add13.nsys-rep[1/1] [========================100%] add13.nsys-rep
+Generated:
+    /home/samuel/nunchaku/add/add13.nsys-rep
+Finished at: Sun Feb  1 21:51:49 UTC 2026
+
+All runs completed successfully.

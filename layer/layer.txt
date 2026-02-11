@@ -1,0 +1,1219 @@
+========================================
+Running: nsys profile -o layer/layer1 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 1024 --hidden-dim 3072
+Started at: Sun Feb  1 22:48:49 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 1, Tokens: 1024, Effective tokens: 1024
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      1024
+  Hidden dim (K):  3072
+  Total elements:  3,145,728
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [1024, 3072] torch.bfloat16
+  output:        [1024, 3072] torch.bfloat16
+  weight:        [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:           6.29 MB (tokens x hidden_dim x 2)
+  Read weight:          6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write output:         6.29 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:           6.30 MB
+  Total write:          6.29 MB
+  Total:               12.60 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0220 ms
+  Std:   0.0055 ms
+  Min:   0.0189 ms
+  Max:   0.0669 ms
+
+Bandwidth:
+  571.3 GB/s (7.1% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-b802.qdstrm'
+
+[1/1] [0%                          ] layer1.nsys-rep
+[1/1] [0%                          ] layer1.nsys-rep
+[1/1] [===23%                      ] layer1.nsys-rep
+[1/1] [===24%                      ] layer1.nsys-rep
+[1/1] [====25%                     ] layer1.nsys-rep
+[1/1] [====26%                     ] layer1.nsys-rep
+[1/1] [====28%                     ] layer1.nsys-rep
+[1/1] [=====29%                    ] layer1.nsys-rep
+[1/1] [=====30%                    ] layer1.nsys-rep
+[1/1] [=====31%                    ] layer1.nsys-rep
+[1/1] [=====32%                    ] layer1.nsys-rep
+[1/1] [======33%                   ] layer1.nsys-rep
+[1/1] [======35%                   ] layer1.nsys-rep
+[1/1] [=======36%                  ] layer1.nsys-rep
+[1/1] [=======37%                  ] layer1.nsys-rep
+[1/1] [=======38%                  ] layer1.nsys-rep
+[1/1] [=======39%                  ] layer1.nsys-rep
+[1/1] [========40%                 ] layer1.nsys-rep
+[1/1] [========41%                 ] layer1.nsys-rep
+[1/1] [========42%                 ] layer1.nsys-rep
+[1/1] [=========43%                ] layer1.nsys-rep
+[1/1] [=========44%                ] layer1.nsys-rep
+[1/1] [=========46%                ] layer1.nsys-rep
+[1/1] [==============61%           ] layer1.nsys-rep
+[1/1] [================71%         ] layer1.nsys-rep
+[1/1] [=================74%        ] layer1.nsys-rep
+[1/1] [========================100%] layer1.nsys-rep
+[1/1] [========================100%] layer1.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer1.nsys-rep
+Finished at: Sun Feb  1 22:49:06 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer2 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 2048 --hidden-dim 3072
+Started at: Sun Feb  1 22:49:06 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 1, Tokens: 2048, Effective tokens: 2048
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      2048
+  Hidden dim (K):  3072
+  Total elements:  6,291,456
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [2048, 3072] torch.bfloat16
+  output:        [2048, 3072] torch.bfloat16
+  weight:        [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:          12.58 MB (tokens x hidden_dim x 2)
+  Read weight:          6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write output:        12.58 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          12.60 MB
+  Total write:         12.58 MB
+  Total:               25.18 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0302 ms
+  Std:   0.0063 ms
+  Min:   0.0259 ms
+  Max:   0.0733 ms
+
+Bandwidth:
+  834.3 GB/s (10.4% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-7001.qdstrm'
+
+[1/1] [0%                          ] layer2.nsys-rep
+[1/1] [0%                          ] layer2.nsys-rep
+[1/1] [0%                          ] layer2.nsys-rep
+[1/1] [===23%                      ] layer2.nsys-rep
+[1/1] [===24%                      ] layer2.nsys-rep
+[1/1] [====25%                     ] layer2.nsys-rep
+[1/1] [====26%                     ] layer2.nsys-rep
+[1/1] [====27%                     ] layer2.nsys-rep
+[1/1] [====28%                     ] layer2.nsys-rep
+[1/1] [=====29%                    ] layer2.nsys-rep
+[1/1] [=====30%                    ] layer2.nsys-rep
+[1/1] [=====31%                    ] layer2.nsys-rep
+[1/1] [=====32%                    ] layer2.nsys-rep
+[1/1] [======34%                   ] layer2.nsys-rep
+[1/1] [======35%                   ] layer2.nsys-rep
+[1/1] [=======36%                  ] layer2.nsys-rep
+[1/1] [=======37%                  ] layer2.nsys-rep
+[1/1] [=======38%                  ] layer2.nsys-rep
+[1/1] [=======39%                  ] layer2.nsys-rep
+[1/1] [========40%                 ] layer2.nsys-rep
+[1/1] [=========45%                ] layer2.nsys-rep
+[1/1] [=========46%                ] layer2.nsys-rep
+[1/1] [==========47%               ] layer2.nsys-rep
+[1/1] [=============59%            ] layer2.nsys-rep
+[1/1] [=============60%            ] layer2.nsys-rep
+[1/1] [==============61%           ] layer2.nsys-rep
+[1/1] [=================73%        ] layer2.nsys-rep
+[1/1] [========================100%] layer2.nsys-rep
+[1/1] [========================100%] layer2.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer2.nsys-rep
+Finished at: Sun Feb  1 22:49:20 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer3 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 3072
+Started at: Sun Feb  1 22:49:20 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  3072
+  Total elements:  12,582,912
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [4096, 3072] torch.bfloat16
+  output:        [4096, 3072] torch.bfloat16
+  weight:        [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:          25.17 MB (tokens x hidden_dim x 2)
+  Read weight:          6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write output:        25.17 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          25.18 MB
+  Total write:         25.17 MB
+  Total:               50.34 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0378 ms
+  Std:   0.0030 ms
+  Min:   0.0348 ms
+  Max:   0.0641 ms
+
+Bandwidth:
+  1332.5 GB/s (16.7% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-af71.qdstrm'
+
+[1/1] [0%                          ] layer3.nsys-rep
+[1/1] [0%                          ] layer3.nsys-rep
+[1/1] [0%                          ] layer3.nsys-rep
+[1/1] [===22%                      ] layer3.nsys-rep
+[1/1] [===23%                      ] layer3.nsys-rep
+[1/1] [===24%                      ] layer3.nsys-rep
+[1/1] [====26%                     ] layer3.nsys-rep
+[1/1] [====27%                     ] layer3.nsys-rep
+[1/1] [====28%                     ] layer3.nsys-rep
+[1/1] [=====29%                    ] layer3.nsys-rep
+[1/1] [=====30%                    ] layer3.nsys-rep
+[1/1] [=====31%                    ] layer3.nsys-rep
+[1/1] [======33%                   ] layer3.nsys-rep
+[1/1] [======34%                   ] layer3.nsys-rep
+[1/1] [======35%                   ] layer3.nsys-rep
+[1/1] [=======36%                  ] layer3.nsys-rep
+[1/1] [=======37%                  ] layer3.nsys-rep
+[1/1] [=======38%                  ] layer3.nsys-rep
+[1/1] [=======39%                  ] layer3.nsys-rep
+[1/1] [========40%                 ] layer3.nsys-rep
+[1/1] [=========44%                ] layer3.nsys-rep
+[1/1] [=========45%                ] layer3.nsys-rep
+[1/1] [=========46%                ] layer3.nsys-rep
+[1/1] [=============58%            ] layer3.nsys-rep
+[1/1] [=============59%            ] layer3.nsys-rep
+[1/1] [=============60%            ] layer3.nsys-rep
+[1/1] [=================72%        ] layer3.nsys-rep
+[1/1] [=================73%        ] layer3.nsys-rep
+[1/1] [========================100%] layer3.nsys-rep
+[1/1] [========================100%] layer3.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer3.nsys-rep
+Finished at: Sun Feb  1 22:49:34 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer4 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 8192 --hidden-dim 3072
+Started at: Sun Feb  1 22:49:34 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 1, Tokens: 8192, Effective tokens: 8192
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      8192
+  Hidden dim (K):  3072
+  Total elements:  25,165,824
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [8192, 3072] torch.bfloat16
+  output:        [8192, 3072] torch.bfloat16
+  weight:        [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:          50.33 MB (tokens x hidden_dim x 2)
+  Read weight:          6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write output:        50.33 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          50.34 MB
+  Total write:         50.33 MB
+  Total:              100.68 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0606 ms
+  Std:   0.0037 ms
+  Min:   0.0578 ms
+  Max:   0.0892 ms
+
+Bandwidth:
+  1660.1 GB/s (20.8% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-098f.qdstrm'
+
+[1/1] [0%                          ] layer4.nsys-rep
+[1/1] [0%                          ] layer4.nsys-rep
+[1/1] [0%                          ] layer4.nsys-rep
+[1/1] [===22%                      ] layer4.nsys-rep
+[1/1] [===23%                      ] layer4.nsys-rep
+[1/1] [===24%                      ] layer4.nsys-rep
+[1/1] [====26%                     ] layer4.nsys-rep
+[1/1] [====28%                     ] layer4.nsys-rep
+[1/1] [=====29%                    ] layer4.nsys-rep
+[1/1] [=====30%                    ] layer4.nsys-rep
+[1/1] [=====31%                    ] layer4.nsys-rep
+[1/1] [======33%                   ] layer4.nsys-rep
+[1/1] [======34%                   ] layer4.nsys-rep
+[1/1] [======35%                   ] layer4.nsys-rep
+[1/1] [=======36%                  ] layer4.nsys-rep
+[1/1] [=======37%                  ] layer4.nsys-rep
+[1/1] [=======38%                  ] layer4.nsys-rep
+[1/1] [=======39%                  ] layer4.nsys-rep
+[1/1] [========41%                 ] layer4.nsys-rep
+[1/1] [=============58%            ] layer4.nsys-rep
+[1/1] [=============59%            ] layer4.nsys-rep
+[1/1] [==============61%           ] layer4.nsys-rep
+[1/1] [=================73%        ] layer4.nsys-rep
+[1/1] [========================100%] layer4.nsys-rep
+[1/1] [========================100%] layer4.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer4.nsys-rep
+Finished at: Sun Feb  1 22:49:46 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer5 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 2048
+Started at: Sun Feb  1 22:49:46 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 2048
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  2048
+  Total elements:  8,388,608
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [4096, 2048] torch.bfloat16
+  output:        [4096, 2048] torch.bfloat16
+  weight:        [2048] torch.bfloat16
+  bias:          [2048] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:          16.78 MB (tokens x hidden_dim x 2)
+  Read weight:          4.10 KB (hidden_dim x 2, L2 cached)
+  Read bias:            4.10 KB (hidden_dim x 2, L2 cached)
+  Write output:        16.78 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          16.79 MB
+  Total write:         16.78 MB
+  Total:               33.56 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0315 ms
+  Std:   0.0091 ms
+  Min:   0.0278 ms
+  Max:   0.1175 ms
+
+Bandwidth:
+  1066.0 GB/s (13.3% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-5d19.qdstrm'
+
+[1/1] [0%                          ] layer5.nsys-rep
+[1/1] [0%                          ] layer5.nsys-rep
+[1/1] [0%                          ] layer5.nsys-rep
+[1/1] [===22%                      ] layer5.nsys-rep
+[1/1] [===23%                      ] layer5.nsys-rep
+[1/1] [===24%                      ] layer5.nsys-rep
+[1/1] [====25%                     ] layer5.nsys-rep
+[1/1] [====26%                     ] layer5.nsys-rep
+[1/1] [====27%                     ] layer5.nsys-rep
+[1/1] [====28%                     ] layer5.nsys-rep
+[1/1] [=====29%                    ] layer5.nsys-rep
+[1/1] [=====30%                    ] layer5.nsys-rep
+[1/1] [=====31%                    ] layer5.nsys-rep
+[1/1] [=====32%                    ] layer5.nsys-rep
+[1/1] [======34%                   ] layer5.nsys-rep
+[1/1] [======35%                   ] layer5.nsys-rep
+[1/1] [=======36%                  ] layer5.nsys-rep
+[1/1] [=======37%                  ] layer5.nsys-rep
+[1/1] [=======38%                  ] layer5.nsys-rep
+[1/1] [=======39%                  ] layer5.nsys-rep
+[1/1] [========40%                 ] layer5.nsys-rep
+[1/1] [========42%                 ] layer5.nsys-rep
+[1/1] [=============60%            ] layer5.nsys-rep
+[1/1] [==============62%           ] layer5.nsys-rep
+[1/1] [=================73%        ] layer5.nsys-rep
+[1/1] [========================100%] layer5.nsys-rep
+[1/1] [========================100%] layer5.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer5.nsys-rep
+Finished at: Sun Feb  1 22:49:59 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer6 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 4096
+Started at: Sun Feb  1 22:49:59 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 4096
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  4096
+  Total elements:  16,777,216
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [4096, 4096] torch.bfloat16
+  output:        [4096, 4096] torch.bfloat16
+  weight:        [4096] torch.bfloat16
+  bias:          [4096] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:          33.55 MB (tokens x hidden_dim x 2)
+  Read weight:          8.19 KB (hidden_dim x 2, L2 cached)
+  Read bias:            8.19 KB (hidden_dim x 2, L2 cached)
+  Write output:        33.55 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          33.57 MB
+  Total write:         33.55 MB
+  Total:               67.13 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0427 ms
+  Std:   0.0053 ms
+  Min:   0.0393 ms
+  Max:   0.0796 ms
+
+Bandwidth:
+  1571.8 GB/s (19.6% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-1014.qdstrm'
+
+[1/1] [0%                          ] layer6.nsys-rep
+[1/1] [0%                          ] layer6.nsys-rep
+[1/1] [===22%                      ] layer6.nsys-rep
+[1/1] [===23%                      ] layer6.nsys-rep
+[1/1] [===24%                      ] layer6.nsys-rep
+[1/1] [====26%                     ] layer6.nsys-rep
+[1/1] [====27%                     ] layer6.nsys-rep
+[1/1] [====28%                     ] layer6.nsys-rep
+[1/1] [=====29%                    ] layer6.nsys-rep
+[1/1] [=====30%                    ] layer6.nsys-rep
+[1/1] [=====31%                    ] layer6.nsys-rep
+[1/1] [======33%                   ] layer6.nsys-rep
+[1/1] [======34%                   ] layer6.nsys-rep
+[1/1] [======35%                   ] layer6.nsys-rep
+[1/1] [=======36%                  ] layer6.nsys-rep
+[1/1] [=======37%                  ] layer6.nsys-rep
+[1/1] [=======38%                  ] layer6.nsys-rep
+[1/1] [=======39%                  ] layer6.nsys-rep
+[1/1] [========40%                 ] layer6.nsys-rep
+[1/1] [=========46%                ] layer6.nsys-rep
+[1/1] [==========48%               ] layer6.nsys-rep
+[1/1] [=============60%            ] layer6.nsys-rep
+[1/1] [==============62%           ] layer6.nsys-rep
+[1/1] [=================73%        ] layer6.nsys-rep
+[1/1] [========================100%] layer6.nsys-rep
+[1/1] [========================100%] layer6.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer6.nsys-rep
+Finished at: Sun Feb  1 22:50:11 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer7 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 8192
+Started at: Sun Feb  1 22:50:11 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 8192
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  8192
+  Total elements:  33,554,432
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [4096, 8192] torch.bfloat16
+  output:        [4096, 8192] torch.bfloat16
+  weight:        [8192] torch.bfloat16
+  bias:          [8192] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:          67.11 MB (tokens x hidden_dim x 2)
+  Read weight:         16.38 KB (hidden_dim x 2, L2 cached)
+  Read bias:           16.38 KB (hidden_dim x 2, L2 cached)
+  Write output:        67.11 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          67.14 MB
+  Total write:         67.11 MB
+  Total:              134.25 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0658 ms
+  Std:   0.0038 ms
+  Min:   0.0629 ms
+  Max:   0.0870 ms
+
+Bandwidth:
+  2040.8 GB/s (25.5% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-76dc.qdstrm'
+
+[1/1] [0%                          ] layer7.nsys-rep
+[1/1] [0%                          ] layer7.nsys-rep
+[1/1] [0%                          ] layer7.nsys-rep
+[1/1] [===22%                      ] layer7.nsys-rep
+[1/1] [===23%                      ] layer7.nsys-rep
+[1/1] [===24%                      ] layer7.nsys-rep
+[1/1] [====25%                     ] layer7.nsys-rep
+[1/1] [====26%                     ] layer7.nsys-rep
+[1/1] [====28%                     ] layer7.nsys-rep
+[1/1] [=====29%                    ] layer7.nsys-rep
+[1/1] [=====30%                    ] layer7.nsys-rep
+[1/1] [=====31%                    ] layer7.nsys-rep
+[1/1] [=====32%                    ] layer7.nsys-rep
+[1/1] [======34%                   ] layer7.nsys-rep
+[1/1] [======35%                   ] layer7.nsys-rep
+[1/1] [=======36%                  ] layer7.nsys-rep
+[1/1] [=======37%                  ] layer7.nsys-rep
+[1/1] [=======38%                  ] layer7.nsys-rep
+[1/1] [=======39%                  ] layer7.nsys-rep
+[1/1] [========40%                 ] layer7.nsys-rep
+[1/1] [========42%                 ] layer7.nsys-rep
+[1/1] [=============58%            ] layer7.nsys-rep
+[1/1] [=============59%            ] layer7.nsys-rep
+[1/1] [==============61%           ] layer7.nsys-rep
+[1/1] [=================73%        ] layer7.nsys-rep
+[1/1] [========================100%] layer7.nsys-rep
+[1/1] [========================100%] layer7.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer7.nsys-rep
+Finished at: Sun Feb  1 22:50:24 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer8 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 4 --tokens 2048 --hidden-dim 3072
+Started at: Sun Feb  1 22:50:24 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 4, Tokens: 2048, Effective tokens: 8192
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      8192
+  Hidden dim (K):  3072
+  Total elements:  25,165,824
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [8192, 3072] torch.bfloat16
+  output:        [8192, 3072] torch.bfloat16
+  weight:        [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:          50.33 MB (tokens x hidden_dim x 2)
+  Read weight:          6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write output:        50.33 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          50.34 MB
+  Total write:         50.33 MB
+  Total:              100.68 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0611 ms
+  Std:   0.0052 ms
+  Min:   0.0578 ms
+  Max:   0.0940 ms
+
+Bandwidth:
+  1648.0 GB/s (20.6% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-e853.qdstrm'
+
+[1/1] [0%                          ] layer8.nsys-rep
+[1/1] [0%                          ] layer8.nsys-rep
+[1/1] [0%                          ] layer8.nsys-rep
+[1/1] [===23%                      ] layer8.nsys-rep
+[1/1] [===24%                      ] layer8.nsys-rep
+[1/1] [====25%                     ] layer8.nsys-rep
+[1/1] [====26%                     ] layer8.nsys-rep
+[1/1] [====27%                     ] layer8.nsys-rep
+[1/1] [====28%                     ] layer8.nsys-rep
+[1/1] [=====29%                    ] layer8.nsys-rep
+[1/1] [=====30%                    ] layer8.nsys-rep
+[1/1] [=====31%                    ] layer8.nsys-rep
+[1/1] [======33%                   ] layer8.nsys-rep
+[1/1] [======34%                   ] layer8.nsys-rep
+[1/1] [======35%                   ] layer8.nsys-rep
+[1/1] [=======36%                  ] layer8.nsys-rep
+[1/1] [=======37%                  ] layer8.nsys-rep
+[1/1] [=======38%                  ] layer8.nsys-rep
+[1/1] [=======39%                  ] layer8.nsys-rep
+[1/1] [========40%                 ] layer8.nsys-rep
+[1/1] [=========46%                ] layer8.nsys-rep
+[1/1] [==========48%               ] layer8.nsys-rep
+[1/1] [=============60%            ] layer8.nsys-rep
+[1/1] [==============61%           ] layer8.nsys-rep
+[1/1] [==============62%           ] layer8.nsys-rep
+[1/1] [=================73%        ] layer8.nsys-rep
+[1/1] [========================100%] layer8.nsys-rep
+[1/1] [========================100%] layer8.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer8.nsys-rep
+Finished at: Sun Feb  1 22:50:36 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer9 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 4 --tokens 4096 --hidden-dim 3072
+Started at: Sun Feb  1 22:50:36 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 4, Tokens: 4096, Effective tokens: 16384
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      16384
+  Hidden dim (K):  3072
+  Total elements:  50,331,648
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [16384, 3072] torch.bfloat16
+  output:        [16384, 3072] torch.bfloat16
+  weight:        [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:         100.66 MB (tokens x hidden_dim x 2)
+  Read weight:          6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write output:       100.66 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:         100.68 MB
+  Total write:        100.66 MB
+  Total:              201.34 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.1032 ms
+  Std:   0.0028 ms
+  Min:   0.1005 ms
+  Max:   0.1273 ms
+
+Bandwidth:
+  1950.3 GB/s (24.4% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-d396.qdstrm'
+
+[1/1] [0%                          ] layer9.nsys-rep
+[1/1] [0%                          ] layer9.nsys-rep
+[1/1] [0%                          ] layer9.nsys-rep
+[1/1] [===23%                      ] layer9.nsys-rep
+[1/1] [===24%                      ] layer9.nsys-rep
+[1/1] [====25%                     ] layer9.nsys-rep
+[1/1] [====26%                     ] layer9.nsys-rep
+[1/1] [====27%                     ] layer9.nsys-rep
+[1/1] [====28%                     ] layer9.nsys-rep
+[1/1] [=====29%                    ] layer9.nsys-rep
+[1/1] [=====30%                    ] layer9.nsys-rep
+[1/1] [=====31%                    ] layer9.nsys-rep
+[1/1] [=====32%                    ] layer9.nsys-rep
+[1/1] [======34%                   ] layer9.nsys-rep
+[1/1] [======35%                   ] layer9.nsys-rep
+[1/1] [=======36%                  ] layer9.nsys-rep
+[1/1] [=======37%                  ] layer9.nsys-rep
+[1/1] [=======38%                  ] layer9.nsys-rep
+[1/1] [=======39%                  ] layer9.nsys-rep
+[1/1] [========40%                 ] layer9.nsys-rep
+[1/1] [========41%                 ] layer9.nsys-rep
+[1/1] [=========43%                ] layer9.nsys-rep
+[1/1] [==============61%           ] layer9.nsys-rep
+[1/1] [==============63%           ] layer9.nsys-rep
+[1/1] [=================74%        ] layer9.nsys-rep
+[1/1] [========================100%] layer9.nsys-rep
+[1/1] [========================100%] layer9.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer9.nsys-rep
+Finished at: Sun Feb  1 22:50:48 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer10 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 4 --tokens 8192 --hidden-dim 3072
+Started at: Sun Feb  1 22:50:48 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 4, Tokens: 8192, Effective tokens: 32768
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      32768
+  Hidden dim (K):  3072
+  Total elements:  100,663,296
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [32768, 3072] torch.bfloat16
+  output:        [32768, 3072] torch.bfloat16
+  weight:        [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:         201.33 MB (tokens x hidden_dim x 2)
+  Read weight:          6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write output:       201.33 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:         201.34 MB
+  Total write:        201.33 MB
+  Total:              402.67 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.1894 ms
+  Std:   0.0040 ms
+  Min:   0.1863 ms
+  Max:   0.2168 ms
+
+Bandwidth:
+  2126.1 GB/s (26.6% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-3fae.qdstrm'
+
+[1/1] [0%                          ] layer10.nsys-rep
+[1/1] [0%                          ] layer10.nsys-rep
+[1/1] [0%                          ] layer10.nsys-rep
+[1/1] [===22%                      ] layer10.nsys-rep
+[1/1] [===23%                      ] layer10.nsys-rep
+[1/1] [===24%                      ] layer10.nsys-rep
+[1/1] [====26%                     ] layer10.nsys-rep
+[1/1] [====27%                     ] layer10.nsys-rep
+[1/1] [====28%                     ] layer10.nsys-rep
+[1/1] [=====29%                    ] layer10.nsys-rep
+[1/1] [=====30%                    ] layer10.nsys-rep
+[1/1] [=====31%                    ] layer10.nsys-rep
+[1/1] [======33%                   ] layer10.nsys-rep
+[1/1] [======34%                   ] layer10.nsys-rep
+[1/1] [======35%                   ] layer10.nsys-rep
+[1/1] [=======36%                  ] layer10.nsys-rep
+[1/1] [=======37%                  ] layer10.nsys-rep
+[1/1] [=======38%                  ] layer10.nsys-rep
+[1/1] [=======39%                  ] layer10.nsys-rep
+[1/1] [========40%                 ] layer10.nsys-rep
+[1/1] [========41%                 ] layer10.nsys-rep
+[1/1] [=============59%            ] layer10.nsys-rep
+[1/1] [=============60%            ] layer10.nsys-rep
+[1/1] [==============61%           ] layer10.nsys-rep
+[1/1] [=================73%        ] layer10.nsys-rep
+[1/1] [========================100%] layer10.nsys-rep
+[1/1] [========================100%] layer10.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer10.nsys-rep
+Finished at: Sun Feb  1 22:50:59 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer11 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 16 --tokens 4096 --hidden-dim 3072
+Started at: Sun Feb  1 22:50:59 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 16, Tokens: 4096, Effective tokens: 65536
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      65536
+  Hidden dim (K):  3072
+  Total elements:  201,326,592
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [65536, 3072] torch.bfloat16
+  output:        [65536, 3072] torch.bfloat16
+  weight:        [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:         402.65 MB (tokens x hidden_dim x 2)
+  Read weight:          6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write output:       402.65 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:         402.67 MB
+  Total write:        402.65 MB
+  Total:              805.32 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.3605 ms
+  Std:   0.0042 ms
+  Min:   0.3571 ms
+  Max:   0.3938 ms
+
+Bandwidth:
+  2233.9 GB/s (27.9% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-c3f9.qdstrm'
+
+[1/1] [0%                          ] layer11.nsys-rep
+[1/1] [0%                          ] layer11.nsys-rep
+[1/1] [0%                          ] layer11.nsys-rep
+[1/1] [===22%                      ] layer11.nsys-rep
+[1/1] [===23%                      ] layer11.nsys-rep
+[1/1] [===24%                      ] layer11.nsys-rep
+[1/1] [====25%                     ] layer11.nsys-rep
+[1/1] [====26%                     ] layer11.nsys-rep
+[1/1] [====28%                     ] layer11.nsys-rep
+[1/1] [=====29%                    ] layer11.nsys-rep
+[1/1] [=====30%                    ] layer11.nsys-rep
+[1/1] [=====31%                    ] layer11.nsys-rep
+[1/1] [======33%                   ] layer11.nsys-rep
+[1/1] [======34%                   ] layer11.nsys-rep
+[1/1] [======35%                   ] layer11.nsys-rep
+[1/1] [=======36%                  ] layer11.nsys-rep
+[1/1] [=======37%                  ] layer11.nsys-rep
+[1/1] [=======38%                  ] layer11.nsys-rep
+[1/1] [=======39%                  ] layer11.nsys-rep
+[1/1] [=========46%                ] layer11.nsys-rep
+[1/1] [==========48%               ] layer11.nsys-rep
+[1/1] [=============59%            ] layer11.nsys-rep
+[1/1] [==============61%           ] layer11.nsys-rep
+[1/1] [=================73%        ] layer11.nsys-rep
+[1/1] [========================100%] layer11.nsys-rep
+[1/1] [========================100%] layer11.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer11.nsys-rep
+Finished at: Sun Feb  1 22:51:13 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer12 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 16 --tokens 8192 --hidden-dim 3072
+Started at: Sun Feb  1 22:51:13 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 16, Tokens: 8192, Effective tokens: 131072
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      131072
+  Hidden dim (K):  3072
+  Total elements:  402,653,184
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [131072, 3072] torch.bfloat16
+  output:        [131072, 3072] torch.bfloat16
+  weight:        [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:         805.31 MB (tokens x hidden_dim x 2)
+  Read weight:          6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write output:       805.31 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:         805.32 MB
+  Total write:        805.31 MB
+  Total:                1.61 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.7026 ms
+  Std:   0.0058 ms
+  Min:   0.6996 ms
+  Max:   0.7465 ms
+
+Bandwidth:
+  2292.3 GB/s (28.7% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-2dc9.qdstrm'
+
+[1/1] [0%                          ] layer12.nsys-rep
+[1/1] [0%                          ] layer12.nsys-rep
+[1/1] [0%                          ] layer12.nsys-rep
+[1/1] [===23%                      ] layer12.nsys-rep
+[1/1] [===24%                      ] layer12.nsys-rep
+[1/1] [====25%                     ] layer12.nsys-rep
+[1/1] [====26%                     ] layer12.nsys-rep
+[1/1] [====27%                     ] layer12.nsys-rep
+[1/1] [====28%                     ] layer12.nsys-rep
+[1/1] [=====29%                    ] layer12.nsys-rep
+[1/1] [=====30%                    ] layer12.nsys-rep
+[1/1] [=====31%                    ] layer12.nsys-rep
+[1/1] [=====32%                    ] layer12.nsys-rep
+[1/1] [======34%                   ] layer12.nsys-rep
+[1/1] [======35%                   ] layer12.nsys-rep
+[1/1] [=======36%                  ] layer12.nsys-rep
+[1/1] [=======37%                  ] layer12.nsys-rep
+[1/1] [=======38%                  ] layer12.nsys-rep
+[1/1] [=======39%                  ] layer12.nsys-rep
+[1/1] [========40%                 ] layer12.nsys-rep
+[1/1] [========42%                 ] layer12.nsys-rep
+[1/1] [=============60%            ] layer12.nsys-rep
+[1/1] [==============62%           ] layer12.nsys-rep
+[1/1] [=================73%        ] layer12.nsys-rep
+[1/1] [========================100%] layer12.nsys-rep
+[1/1] [========================100%] layer12.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer12.nsys-rep
+Finished at: Sun Feb  1 22:51:25 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer13 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 64 --tokens 4096 --hidden-dim 3072
+Started at: Sun Feb  1 22:51:25 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 64, Tokens: 4096, Effective tokens: 262144
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      262144
+  Hidden dim (K):  3072
+  Total elements:  805,306,368
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [262144, 3072] torch.bfloat16
+  output:        [262144, 3072] torch.bfloat16
+  weight:        [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:           1.61 GB (tokens x hidden_dim x 2)
+  Read weight:          6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write output:         1.61 GB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:           1.61 GB
+  Total write:          1.61 GB
+  Total:                3.22 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  1.3860 ms
+  Std:   0.0054 ms
+  Min:   1.3830 ms
+  Max:   1.4356 ms
+
+Bandwidth:
+  2324.2 GB/s (29.1% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-6955.qdstrm'
+
+[1/1] [0%                          ] layer13.nsys-rep
+[1/1] [0%                          ] layer13.nsys-rep
+[1/1] [0%                          ] layer13.nsys-rep
+[1/1] [===22%                      ] layer13.nsys-rep
+[1/1] [===23%                      ] layer13.nsys-rep
+[1/1] [===24%                      ] layer13.nsys-rep
+[1/1] [====26%                     ] layer13.nsys-rep
+[1/1] [====27%                     ] layer13.nsys-rep
+[1/1] [====28%                     ] layer13.nsys-rep
+[1/1] [=====29%                    ] layer13.nsys-rep
+[1/1] [=====30%                    ] layer13.nsys-rep
+[1/1] [=====31%                    ] layer13.nsys-rep
+[1/1] [======33%                   ] layer13.nsys-rep
+[1/1] [======34%                   ] layer13.nsys-rep
+[1/1] [======35%                   ] layer13.nsys-rep
+[1/1] [=======36%                  ] layer13.nsys-rep
+[1/1] [=======37%                  ] layer13.nsys-rep
+[1/1] [=======38%                  ] layer13.nsys-rep
+[1/1] [=======39%                  ] layer13.nsys-rep
+[1/1] [========40%                 ] layer13.nsys-rep
+[1/1] [========41%                 ] layer13.nsys-rep
+[1/1] [========42%                 ] layer13.nsys-rep
+[1/1] [=============59%            ] layer13.nsys-rep
+[1/1] [==============62%           ] layer13.nsys-rep
+[1/1] [=================73%        ] layer13.nsys-rep
+[1/1] [========================100%] layer13.nsys-rep
+[1/1] [========================100%] layer13.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer13.nsys-rep
+Finished at: Sun Feb  1 22:51:37 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer14 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 64 --tokens 8192 --hidden-dim 3072
+Started at: Sun Feb  1 22:51:37 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 64, Tokens: 8192, Effective tokens: 524288
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      524288
+  Hidden dim (K):  3072
+  Total elements:  1,610,612,736
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [524288, 3072] torch.bfloat16
+  output:        [524288, 3072] torch.bfloat16
+  weight:        [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:           3.22 GB (tokens x hidden_dim x 2)
+  Read weight:          6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write output:         3.22 GB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:           3.22 GB
+  Total write:          3.22 GB
+  Total:                6.44 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  2.7579 ms
+  Std:   0.0128 ms
+  Min:   2.7519 ms
+  Max:   2.8481 ms
+
+Bandwidth:
+  2336.0 GB/s (29.2% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-e1c7.qdstrm'
+
+[1/1] [0%                          ] layer14.nsys-rep
+[1/1] [0%                          ] layer14.nsys-rep
+[1/1] [0%                          ] layer14.nsys-rep
+[1/1] [===23%                      ] layer14.nsys-rep
+[1/1] [===24%                      ] layer14.nsys-rep
+[1/1] [====25%                     ] layer14.nsys-rep
+[1/1] [====27%                     ] layer14.nsys-rep
+[1/1] [====28%                     ] layer14.nsys-rep
+[1/1] [=====29%                    ] layer14.nsys-rep
+[1/1] [=====30%                    ] layer14.nsys-rep
+[1/1] [=====31%                    ] layer14.nsys-rep
+[1/1] [=====32%                    ] layer14.nsys-rep
+[1/1] [======34%                   ] layer14.nsys-rep
+[1/1] [======35%                   ] layer14.nsys-rep
+[1/1] [=======36%                  ] layer14.nsys-rep
+[1/1] [=======37%                  ] layer14.nsys-rep
+[1/1] [=======38%                  ] layer14.nsys-rep
+[1/1] [=======39%                  ] layer14.nsys-rep
+[1/1] [========40%                 ] layer14.nsys-rep
+[1/1] [========41%                 ] layer14.nsys-rep
+[1/1] [========42%                 ] layer14.nsys-rep
+[1/1] [=========43%                ] layer14.nsys-rep
+[1/1] [=============60%            ] layer14.nsys-rep
+[1/1] [==============63%           ] layer14.nsys-rep
+[1/1] [=================74%        ] layer14.nsys-rep
+[1/1] [========================100%] layer14.nsys-rep
+[1/1] [========================100%] layer14.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer14.nsys-rep
+Finished at: Sun Feb  1 22:51:50 UTC 2026
+
+========================================
+Running: nsys profile -o layer/layer15 python scripts/profile_layernorm_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 16 --tokens 4096 --hidden-dim 8192
+Started at: Sun Feb  1 22:51:50 UTC 2026
+----------------------------------------
+Profiling nunchaku layernorm kernel...
+  Batch size: 16, Tokens: 4096, Effective tokens: 65536
+  Hidden dim: 8192
+  Clear L2 cache: True
+
+==========================================================================
+layernorm Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      65536
+  Hidden dim (K):  8192
+  Total elements:  536,870,912
+  Data type:       torch.bfloat16 (2 bytes/element)
+  Epsilon:         1e-05
+
+Tensor Shapes:
+  input:         [65536, 8192] torch.bfloat16
+  output:        [65536, 8192] torch.bfloat16
+  weight:        [8192] torch.bfloat16
+  bias:          [8192] torch.bfloat16
+
+Operation: out = (input - mean) / sqrt(var + eps) * weight + bias
+
+Memory Traffic:
+  Read input:           1.07 GB (tokens x hidden_dim x 2)
+  Read weight:         16.38 KB (hidden_dim x 2, L2 cached)
+  Read bias:           16.38 KB (hidden_dim x 2, L2 cached)
+  Write output:         1.07 GB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:           1.07 GB
+  Total write:          1.07 GB
+  Total:                2.15 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.7118 ms
+  Std:   0.0063 ms
+  Min:   0.7076 ms
+  Max:   0.7590 ms
+
+Bandwidth:
+  3017.0 GB/s (37.7% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-36ac.qdstrm'
+
+[1/1] [0%                          ] layer15.nsys-rep
+[1/1] [0%                          ] layer15.nsys-rep
+[1/1] [0%                          ] layer15.nsys-rep
+[1/1] [===23%                      ] layer15.nsys-rep
+[1/1] [===24%                      ] layer15.nsys-rep
+[1/1] [====25%                     ] layer15.nsys-rep
+[1/1] [====26%                     ] layer15.nsys-rep
+[1/1] [====27%                     ] layer15.nsys-rep
+[1/1] [====28%                     ] layer15.nsys-rep
+[1/1] [=====29%                    ] layer15.nsys-rep
+[1/1] [=====30%                    ] layer15.nsys-rep
+[1/1] [=====31%                    ] layer15.nsys-rep
+[1/1] [=====32%                    ] layer15.nsys-rep
+[1/1] [======34%                   ] layer15.nsys-rep
+[1/1] [======35%                   ] layer15.nsys-rep
+[1/1] [=======36%                  ] layer15.nsys-rep
+[1/1] [=======37%                  ] layer15.nsys-rep
+[1/1] [=======38%                  ] layer15.nsys-rep
+[1/1] [=======39%                  ] layer15.nsys-rep
+[1/1] [========40%                 ] layer15.nsys-rep
+[1/1] [========41%                 ] layer15.nsys-rep
+[1/1] [=========43%                ] layer15.nsys-rep
+[1/1] [=============60%            ] layer15.nsys-rep
+[1/1] [==============61%           ] layer15.nsys-rep
+[1/1] [==============63%           ] layer15.nsys-rep
+[1/1] [=================74%        ] layer15.nsys-rep
+[1/1] [========================100%] layer15.nsys-rep
+[1/1] [========================100%] layer15.nsys-rep
+Generated:
+    /home/samuel/nunchaku/layer/layer15.nsys-rep
+Finished at: Sun Feb  1 22:52:03 UTC 2026
+
+All runs completed successfully.

@@ -1,0 +1,781 @@
+========================================
+Running: nsys profile -o mul/mul1 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 1024 --hidden-dim 3072
+Started at: Sun Feb  1 22:52:07 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 1, Tokens: 1024, Effective tokens: 1024
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      1024
+  Hidden dim (K):  3072
+  Total elements:  3,145,728
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [1024, 3072] torch.bfloat16
+  scale:         [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:               6.29 MB (tokens x hidden_dim x 2)
+  Read scale:           6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write x:              6.29 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:           6.30 MB
+  Total write:          6.29 MB
+  Total:               12.60 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0182 ms
+  Std:   0.0048 ms
+  Min:   0.0151 ms
+  Max:   0.0486 ms
+
+Bandwidth:
+  690.5 GB/s (8.6% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-61f3.qdstrm'
+[1/1] [0%                          ] mul1.nsys-rep[1/1] [0%                          ] mul1.nsys-rep[1/1] [===22%                      ] mul1.nsys-rep[1/1] [===23%                      ] mul1.nsys-rep[1/1] [===24%                      ] mul1.nsys-rep[1/1] [====25%                     ] mul1.nsys-rep[1/1] [====26%                     ] mul1.nsys-rep[1/1] [====27%                     ] mul1.nsys-rep[1/1] [=====29%                    ] mul1.nsys-rep[1/1] [=====30%                    ] mul1.nsys-rep[1/1] [=====31%                    ] mul1.nsys-rep[1/1] [=====32%                    ] mul1.nsys-rep[1/1] [======34%                   ] mul1.nsys-rep[1/1] [======35%                   ] mul1.nsys-rep[1/1] [=======36%                  ] mul1.nsys-rep[1/1] [=======37%                  ] mul1.nsys-rep[1/1] [=======38%                  ] mul1.nsys-rep[1/1] [=======39%                  ] mul1.nsys-rep[1/1] [========40%                 ] mul1.nsys-rep[1/1] [========41%                 ] mul1.nsys-rep[1/1] [========42%                 ] mul1.nsys-rep[1/1] [=============60%            ] mul1.nsys-rep[1/1] [==============61%           ] mul1.nsys-rep[1/1] [==============62%           ] mul1.nsys-rep[1/1] [=================73%        ] mul1.nsys-rep[1/1] [========================100%] mul1.nsys-rep[1/1] [========================100%] mul1.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul1.nsys-rep
+Finished at: Sun Feb  1 22:52:22 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul2 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 2048 --hidden-dim 3072
+Started at: Sun Feb  1 22:52:22 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 1, Tokens: 2048, Effective tokens: 2048
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      2048
+  Hidden dim (K):  3072
+  Total elements:  6,291,456
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [2048, 3072] torch.bfloat16
+  scale:         [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:              12.58 MB (tokens x hidden_dim x 2)
+  Read scale:           6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write x:             12.58 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          12.60 MB
+  Total write:         12.58 MB
+  Total:               25.18 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0193 ms
+  Std:   0.0050 ms
+  Min:   0.0162 ms
+  Max:   0.0525 ms
+
+Bandwidth:
+  1307.6 GB/s (16.3% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-a029.qdstrm'
+[1/1] [0%                          ] mul2.nsys-rep[1/1] [0%                          ] mul2.nsys-rep[1/1] [0%                          ] mul2.nsys-rep[1/1] [===23%                      ] mul2.nsys-rep[1/1] [===24%                      ] mul2.nsys-rep[1/1] [====25%                     ] mul2.nsys-rep[1/1] [====27%                     ] mul2.nsys-rep[1/1] [====28%                     ] mul2.nsys-rep[1/1] [=====29%                    ] mul2.nsys-rep[1/1] [=====30%                    ] mul2.nsys-rep[1/1] [=====31%                    ] mul2.nsys-rep[1/1] [=====32%                    ] mul2.nsys-rep[1/1] [======34%                   ] mul2.nsys-rep[1/1] [======35%                   ] mul2.nsys-rep[1/1] [=======36%                  ] mul2.nsys-rep[1/1] [=======37%                  ] mul2.nsys-rep[1/1] [=======38%                  ] mul2.nsys-rep[1/1] [=======39%                  ] mul2.nsys-rep[1/1] [========40%                 ] mul2.nsys-rep[1/1] [========41%                 ] mul2.nsys-rep[1/1] [==========47%               ] mul2.nsys-rep[1/1] [==========49%               ] mul2.nsys-rep[1/1] [=============60%            ] mul2.nsys-rep[1/1] [==============61%           ] mul2.nsys-rep[1/1] [==============63%           ] mul2.nsys-rep[1/1] [=================74%        ] mul2.nsys-rep[1/1] [========================100%] mul2.nsys-rep[1/1] [========================100%] mul2.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul2.nsys-rep
+Finished at: Sun Feb  1 22:52:33 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul3 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 3072
+Started at: Sun Feb  1 22:52:33 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  3072
+  Total elements:  12,582,912
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [4096, 3072] torch.bfloat16
+  scale:         [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:              25.17 MB (tokens x hidden_dim x 2)
+  Read scale:           6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write x:             25.17 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          25.18 MB
+  Total write:         25.17 MB
+  Total:               50.34 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0240 ms
+  Std:   0.0068 ms
+  Min:   0.0211 ms
+  Max:   0.0904 ms
+
+Bandwidth:
+  2099.7 GB/s (26.2% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-7fe3.qdstrm'
+[1/1] [0%                          ] mul3.nsys-rep[1/1] [0%                          ] mul3.nsys-rep[1/1] [0%                          ] mul3.nsys-rep[1/1] [===22%                      ] mul3.nsys-rep[1/1] [===23%                      ] mul3.nsys-rep[1/1] [===24%                      ] mul3.nsys-rep[1/1] [====25%                     ] mul3.nsys-rep[1/1] [====26%                     ] mul3.nsys-rep[1/1] [====27%                     ] mul3.nsys-rep[1/1] [====28%                     ] mul3.nsys-rep[1/1] [=====29%                    ] mul3.nsys-rep[1/1] [=====30%                    ] mul3.nsys-rep[1/1] [=====31%                    ] mul3.nsys-rep[1/1] [======33%                   ] mul3.nsys-rep[1/1] [======34%                   ] mul3.nsys-rep[1/1] [======35%                   ] mul3.nsys-rep[1/1] [=======36%                  ] mul3.nsys-rep[1/1] [=======37%                  ] mul3.nsys-rep[1/1] [=======38%                  ] mul3.nsys-rep[1/1] [=======39%                  ] mul3.nsys-rep[1/1] [========40%                 ] mul3.nsys-rep[1/1] [========42%                 ] mul3.nsys-rep[1/1] [=============60%            ] mul3.nsys-rep[1/1] [==============62%           ] mul3.nsys-rep[1/1] [=================73%        ] mul3.nsys-rep[1/1] [========================100%] mul3.nsys-rep[1/1] [========================100%] mul3.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul3.nsys-rep
+Finished at: Sun Feb  1 22:52:45 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul4 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 8192 --hidden-dim 3072
+Started at: Sun Feb  1 22:52:45 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 1, Tokens: 8192, Effective tokens: 8192
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      8192
+  Hidden dim (K):  3072
+  Total elements:  25,165,824
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [8192, 3072] torch.bfloat16
+  scale:         [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:              50.33 MB (tokens x hidden_dim x 2)
+  Read scale:           6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write x:             50.33 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          50.34 MB
+  Total write:         50.33 MB
+  Total:              100.68 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0342 ms
+  Std:   0.0029 ms
+  Min:   0.0315 ms
+  Max:   0.0573 ms
+
+Bandwidth:
+  2945.2 GB/s (36.8% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-f5e9.qdstrm'
+[1/1] [0%                          ] mul4.nsys-rep[1/1] [0%                          ] mul4.nsys-rep[1/1] [0%                          ] mul4.nsys-rep[1/1] [===23%                      ] mul4.nsys-rep[1/1] [===24%                      ] mul4.nsys-rep[1/1] [====25%                     ] mul4.nsys-rep[1/1] [====27%                     ] mul4.nsys-rep[1/1] [====28%                     ] mul4.nsys-rep[1/1] [=====29%                    ] mul4.nsys-rep[1/1] [=====30%                    ] mul4.nsys-rep[1/1] [=====31%                    ] mul4.nsys-rep[1/1] [=====32%                    ] mul4.nsys-rep[1/1] [======34%                   ] mul4.nsys-rep[1/1] [======35%                   ] mul4.nsys-rep[1/1] [=======36%                  ] mul4.nsys-rep[1/1] [=======37%                  ] mul4.nsys-rep[1/1] [=======38%                  ] mul4.nsys-rep[1/1] [=======39%                  ] mul4.nsys-rep[1/1] [========40%                 ] mul4.nsys-rep[1/1] [========41%                 ] mul4.nsys-rep[1/1] [==========47%               ] mul4.nsys-rep[1/1] [==========49%               ] mul4.nsys-rep[1/1] [===========50%              ] mul4.nsys-rep[1/1] [==============61%           ] mul4.nsys-rep[1/1] [==============63%           ] mul4.nsys-rep[1/1] [=================74%        ] mul4.nsys-rep[1/1] [========================100%] mul4.nsys-rep[1/1] [========================100%] mul4.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul4.nsys-rep
+Finished at: Sun Feb  1 22:52:58 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul5 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 2048
+Started at: Sun Feb  1 22:52:58 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 2048
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  2048
+  Total elements:  8,388,608
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [4096, 2048] torch.bfloat16
+  scale:         [2048] torch.bfloat16
+  bias:          [2048] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:              16.78 MB (tokens x hidden_dim x 2)
+  Read scale:           4.10 KB (hidden_dim x 2, L2 cached)
+  Read bias:            4.10 KB (hidden_dim x 2, L2 cached)
+  Write x:             16.78 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          16.79 MB
+  Total write:         16.78 MB
+  Total:               33.56 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0220 ms
+  Std:   0.0049 ms
+  Min:   0.0184 ms
+  Max:   0.0568 ms
+
+Bandwidth:
+  1525.6 GB/s (19.1% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-3a76.qdstrm'
+[1/1] [0%                          ] mul5.nsys-rep[1/1] [0%                          ] mul5.nsys-rep[1/1] [0%                          ] mul5.nsys-rep[1/1] [===22%                      ] mul5.nsys-rep[1/1] [===23%                      ] mul5.nsys-rep[1/1] [===24%                      ] mul5.nsys-rep[1/1] [====25%                     ] mul5.nsys-rep[1/1] [====26%                     ] mul5.nsys-rep[1/1] [====27%                     ] mul5.nsys-rep[1/1] [====28%                     ] mul5.nsys-rep[1/1] [=====29%                    ] mul5.nsys-rep[1/1] [=====30%                    ] mul5.nsys-rep[1/1] [=====31%                    ] mul5.nsys-rep[1/1] [=====32%                    ] mul5.nsys-rep[1/1] [======34%                   ] mul5.nsys-rep[1/1] [======35%                   ] mul5.nsys-rep[1/1] [=======36%                  ] mul5.nsys-rep[1/1] [=======37%                  ] mul5.nsys-rep[1/1] [=======38%                  ] mul5.nsys-rep[1/1] [=======39%                  ] mul5.nsys-rep[1/1] [========40%                 ] mul5.nsys-rep[1/1] [========42%                 ] mul5.nsys-rep[1/1] [=============59%            ] mul5.nsys-rep[1/1] [=============60%            ] mul5.nsys-rep[1/1] [==============62%           ] mul5.nsys-rep[1/1] [=================73%        ] mul5.nsys-rep[1/1] [========================100%] mul5.nsys-rep[1/1] [========================100%] mul5.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul5.nsys-rep
+Finished at: Sun Feb  1 22:53:10 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul6 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 4096
+Started at: Sun Feb  1 22:53:10 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 4096
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  4096
+  Total elements:  16,777,216
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [4096, 4096] torch.bfloat16
+  scale:         [4096] torch.bfloat16
+  bias:          [4096] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:              33.55 MB (tokens x hidden_dim x 2)
+  Read scale:           8.19 KB (hidden_dim x 2, L2 cached)
+  Read bias:            8.19 KB (hidden_dim x 2, L2 cached)
+  Write x:             33.55 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          33.57 MB
+  Total write:         33.55 MB
+  Total:               67.13 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0277 ms
+  Std:   0.0040 ms
+  Min:   0.0248 ms
+  Max:   0.0563 ms
+
+Bandwidth:
+  2424.5 GB/s (30.3% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-b3f2.qdstrm'
+[1/1] [0%                          ] mul6.nsys-rep[1/1] [0%                          ] mul6.nsys-rep[1/1] [0%                          ] mul6.nsys-rep[1/1] [===23%                      ] mul6.nsys-rep[1/1] [===24%                      ] mul6.nsys-rep[1/1] [====25%                     ] mul6.nsys-rep[1/1] [====27%                     ] mul6.nsys-rep[1/1] [====28%                     ] mul6.nsys-rep[1/1] [=====29%                    ] mul6.nsys-rep[1/1] [=====30%                    ] mul6.nsys-rep[1/1] [=====31%                    ] mul6.nsys-rep[1/1] [=====32%                    ] mul6.nsys-rep[1/1] [======34%                   ] mul6.nsys-rep[1/1] [======35%                   ] mul6.nsys-rep[1/1] [=======36%                  ] mul6.nsys-rep[1/1] [=======37%                  ] mul6.nsys-rep[1/1] [=======38%                  ] mul6.nsys-rep[1/1] [=======39%                  ] mul6.nsys-rep[1/1] [========40%                 ] mul6.nsys-rep[1/1] [========41%                 ] mul6.nsys-rep[1/1] [=========43%                ] mul6.nsys-rep[1/1] [==============61%           ] mul6.nsys-rep[1/1] [==============63%           ] mul6.nsys-rep[1/1] [=================74%        ] mul6.nsys-rep[1/1] [========================100%] mul6.nsys-rep[1/1] [========================100%] mul6.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul6.nsys-rep
+Finished at: Sun Feb  1 22:53:23 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul7 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 8192
+Started at: Sun Feb  1 22:53:23 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 8192
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  8192
+  Total elements:  33,554,432
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [4096, 8192] torch.bfloat16
+  scale:         [8192] torch.bfloat16
+  bias:          [8192] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:              67.11 MB (tokens x hidden_dim x 2)
+  Read scale:          16.38 KB (hidden_dim x 2, L2 cached)
+  Read bias:           16.38 KB (hidden_dim x 2, L2 cached)
+  Write x:             67.11 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          67.14 MB
+  Total write:         67.11 MB
+  Total:              134.25 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0424 ms
+  Std:   0.0048 ms
+  Min:   0.0392 ms
+  Max:   0.0674 ms
+
+Bandwidth:
+  3165.7 GB/s (39.6% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-7912.qdstrm'
+[1/1] [0%                          ] mul7.nsys-rep[1/1] [0%                          ] mul7.nsys-rep[1/1] [0%                          ] mul7.nsys-rep[1/1] [===23%                      ] mul7.nsys-rep[1/1] [===24%                      ] mul7.nsys-rep[1/1] [====25%                     ] mul7.nsys-rep[1/1] [====26%                     ] mul7.nsys-rep[1/1] [====27%                     ] mul7.nsys-rep[1/1] [=====29%                    ] mul7.nsys-rep[1/1] [=====30%                    ] mul7.nsys-rep[1/1] [=====31%                    ] mul7.nsys-rep[1/1] [=====32%                    ] mul7.nsys-rep[1/1] [======34%                   ] mul7.nsys-rep[1/1] [======35%                   ] mul7.nsys-rep[1/1] [=======36%                  ] mul7.nsys-rep[1/1] [=======37%                  ] mul7.nsys-rep[1/1] [=======38%                  ] mul7.nsys-rep[1/1] [=======39%                  ] mul7.nsys-rep[1/1] [========40%                 ] mul7.nsys-rep[1/1] [========41%                 ] mul7.nsys-rep[1/1] [========42%                 ] mul7.nsys-rep[1/1] [=========43%                ] mul7.nsys-rep[1/1] [=========45%                ] mul7.nsys-rep[1/1] [==============63%           ] mul7.nsys-rep[1/1] [=================74%        ] mul7.nsys-rep[1/1] [========================100%] mul7.nsys-rep[1/1] [========================100%] mul7.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul7.nsys-rep
+Finished at: Sun Feb  1 22:53:35 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul8 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 4 --tokens 2048 --hidden-dim 3072
+Started at: Sun Feb  1 22:53:35 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 4, Tokens: 2048, Effective tokens: 8192
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      8192
+  Hidden dim (K):  3072
+  Total elements:  25,165,824
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [8192, 3072] torch.bfloat16
+  scale:         [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:              50.33 MB (tokens x hidden_dim x 2)
+  Read scale:           6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write x:             50.33 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:          50.34 MB
+  Total write:         50.33 MB
+  Total:              100.68 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0353 ms
+  Std:   0.0056 ms
+  Min:   0.0320 ms
+  Max:   0.0733 ms
+
+Bandwidth:
+  2854.9 GB/s (35.7% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-d037.qdstrm'
+[1/1] [0%                          ] mul8.nsys-rep[1/1] [0%                          ] mul8.nsys-rep[1/1] [0%                          ] mul8.nsys-rep[1/1] [===23%                      ] mul8.nsys-rep[1/1] [===24%                      ] mul8.nsys-rep[1/1] [====25%                     ] mul8.nsys-rep[1/1] [====27%                     ] mul8.nsys-rep[1/1] [====28%                     ] mul8.nsys-rep[1/1] [=====29%                    ] mul8.nsys-rep[1/1] [=====30%                    ] mul8.nsys-rep[1/1] [=====31%                    ] mul8.nsys-rep[1/1] [=====32%                    ] mul8.nsys-rep[1/1] [======34%                   ] mul8.nsys-rep[1/1] [======35%                   ] mul8.nsys-rep[1/1] [=======36%                  ] mul8.nsys-rep[1/1] [=======37%                  ] mul8.nsys-rep[1/1] [=======38%                  ] mul8.nsys-rep[1/1] [=======39%                  ] mul8.nsys-rep[1/1] [========40%                 ] mul8.nsys-rep[1/1] [========41%                 ] mul8.nsys-rep[1/1] [=========43%                ] mul8.nsys-rep[1/1] [==============61%           ] mul8.nsys-rep[1/1] [==============63%           ] mul8.nsys-rep[1/1] [=================74%        ] mul8.nsys-rep[1/1] [========================100%] mul8.nsys-rep[1/1] [========================100%] mul8.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul8.nsys-rep
+Finished at: Sun Feb  1 22:53:47 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul9 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 4 --tokens 4096 --hidden-dim 3072
+Started at: Sun Feb  1 22:53:47 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 4, Tokens: 4096, Effective tokens: 16384
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      16384
+  Hidden dim (K):  3072
+  Total elements:  50,331,648
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [16384, 3072] torch.bfloat16
+  scale:         [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:             100.66 MB (tokens x hidden_dim x 2)
+  Read scale:           6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write x:            100.66 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:         100.68 MB
+  Total write:        100.66 MB
+  Total:              201.34 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0550 ms
+  Std:   0.0030 ms
+  Min:   0.0523 ms
+  Max:   0.0780 ms
+
+Bandwidth:
+  3663.2 GB/s (45.8% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-6b61.qdstrm'
+[1/1] [0%                          ] mul9.nsys-rep[1/1] [0%                          ] mul9.nsys-rep[1/1] [0%                          ] mul9.nsys-rep[1/1] [===23%                      ] mul9.nsys-rep[1/1] [===24%                      ] mul9.nsys-rep[1/1] [====25%                     ] mul9.nsys-rep[1/1] [====26%                     ] mul9.nsys-rep[1/1] [====27%                     ] mul9.nsys-rep[1/1] [====28%                     ] mul9.nsys-rep[1/1] [=====29%                    ] mul9.nsys-rep[1/1] [=====30%                    ] mul9.nsys-rep[1/1] [=====31%                    ] mul9.nsys-rep[1/1] [=====32%                    ] mul9.nsys-rep[1/1] [======34%                   ] mul9.nsys-rep[1/1] [======35%                   ] mul9.nsys-rep[1/1] [=======36%                  ] mul9.nsys-rep[1/1] [=======37%                  ] mul9.nsys-rep[1/1] [=======38%                  ] mul9.nsys-rep[1/1] [=======39%                  ] mul9.nsys-rep[1/1] [========40%                 ] mul9.nsys-rep[1/1] [=========46%                ] mul9.nsys-rep[1/1] [==========48%               ] mul9.nsys-rep[1/1] [=============60%            ] mul9.nsys-rep[1/1] [==============61%           ] mul9.nsys-rep[1/1] [==============63%           ] mul9.nsys-rep[1/1] [=================74%        ] mul9.nsys-rep[1/1] [========================100%] mul9.nsys-rep[1/1] [========================100%] mul9.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul9.nsys-rep
+Finished at: Sun Feb  1 22:54:00 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul10 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 4 --tokens 8192 --hidden-dim 3072
+Started at: Sun Feb  1 22:54:00 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 4, Tokens: 8192, Effective tokens: 32768
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      32768
+  Hidden dim (K):  3072
+  Total elements:  100,663,296
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [32768, 3072] torch.bfloat16
+  scale:         [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:             201.33 MB (tokens x hidden_dim x 2)
+  Read scale:           6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write x:            201.33 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:         201.34 MB
+  Total write:        201.33 MB
+  Total:              402.67 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0981 ms
+  Std:   0.0042 ms
+  Min:   0.0946 ms
+  Max:   0.1353 ms
+
+Bandwidth:
+  4105.6 GB/s (51.3% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-b0bb.qdstrm'
+[1/1] [0%                          ] mul10.nsys-rep[1/1] [0%                          ] mul10.nsys-rep[1/1] [0%                          ] mul10.nsys-rep[1/1] [===23%                      ] mul10.nsys-rep[1/1] [===24%                      ] mul10.nsys-rep[1/1] [====25%                     ] mul10.nsys-rep[1/1] [====27%                     ] mul10.nsys-rep[1/1] [====28%                     ] mul10.nsys-rep[1/1] [=====29%                    ] mul10.nsys-rep[1/1] [=====30%                    ] mul10.nsys-rep[1/1] [=====31%                    ] mul10.nsys-rep[1/1] [=====32%                    ] mul10.nsys-rep[1/1] [======34%                   ] mul10.nsys-rep[1/1] [======35%                   ] mul10.nsys-rep[1/1] [=======36%                  ] mul10.nsys-rep[1/1] [=======37%                  ] mul10.nsys-rep[1/1] [=======38%                  ] mul10.nsys-rep[1/1] [=======39%                  ] mul10.nsys-rep[1/1] [========40%                 ] mul10.nsys-rep[1/1] [=========44%                ] mul10.nsys-rep[1/1] [=========45%                ] mul10.nsys-rep[1/1] [=============59%            ] mul10.nsys-rep[1/1] [=============60%            ] mul10.nsys-rep[1/1] [==============62%           ] mul10.nsys-rep[1/1] [=================73%        ] mul10.nsys-rep[1/1] [========================100%] mul10.nsys-rep[1/1] [========================100%] mul10.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul10.nsys-rep
+Finished at: Sun Feb  1 22:54:13 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul11 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 16 --tokens 4096 --hidden-dim 3072
+Started at: Sun Feb  1 22:54:13 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 16, Tokens: 4096, Effective tokens: 65536
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      65536
+  Hidden dim (K):  3072
+  Total elements:  201,326,592
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [65536, 3072] torch.bfloat16
+  scale:         [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:             402.65 MB (tokens x hidden_dim x 2)
+  Read scale:           6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write x:            402.65 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:         402.67 MB
+  Total write:        402.65 MB
+  Total:              805.32 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.1769 ms
+  Std:   0.0033 ms
+  Min:   0.1741 ms
+  Max:   0.2051 ms
+
+Bandwidth:
+  4552.8 GB/s (56.9% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-23a3.qdstrm'
+[1/1] [0%                          ] mul11.nsys-rep[1/1] [0%                          ] mul11.nsys-rep[1/1] [0%                          ] mul11.nsys-rep[1/1] [===23%                      ] mul11.nsys-rep[1/1] [===24%                      ] mul11.nsys-rep[1/1] [====25%                     ] mul11.nsys-rep[1/1] [====26%                     ] mul11.nsys-rep[1/1] [====27%                     ] mul11.nsys-rep[1/1] [=====29%                    ] mul11.nsys-rep[1/1] [=====30%                    ] mul11.nsys-rep[1/1] [=====31%                    ] mul11.nsys-rep[1/1] [=====32%                    ] mul11.nsys-rep[1/1] [======34%                   ] mul11.nsys-rep[1/1] [======35%                   ] mul11.nsys-rep[1/1] [=======36%                  ] mul11.nsys-rep[1/1] [=======37%                  ] mul11.nsys-rep[1/1] [=======38%                  ] mul11.nsys-rep[1/1] [=======39%                  ] mul11.nsys-rep[1/1] [========40%                 ] mul11.nsys-rep[1/1] [========42%                 ] mul11.nsys-rep[1/1] [=============60%            ] mul11.nsys-rep[1/1] [==============62%           ] mul11.nsys-rep[1/1] [=================73%        ] mul11.nsys-rep[1/1] [========================100%] mul11.nsys-rep[1/1] [========================100%] mul11.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul11.nsys-rep
+Finished at: Sun Feb  1 22:54:25 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul12 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 16 --tokens 8192 --hidden-dim 3072
+Started at: Sun Feb  1 22:54:25 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 16, Tokens: 8192, Effective tokens: 131072
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      131072
+  Hidden dim (K):  3072
+  Total elements:  402,653,184
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [131072, 3072] torch.bfloat16
+  scale:         [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:             805.31 MB (tokens x hidden_dim x 2)
+  Read scale:           6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write x:            805.31 MB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:         805.32 MB
+  Total write:        805.31 MB
+  Total:                1.61 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.3382 ms
+  Std:   0.0028 ms
+  Min:   0.3360 ms
+  Max:   0.3635 ms
+
+Bandwidth:
+  4762.3 GB/s (59.5% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-5d93.qdstrm'
+[1/1] [0%                          ] mul12.nsys-rep[1/1] [0%                          ] mul12.nsys-rep[1/1] [0%                          ] mul12.nsys-rep[1/1] [===22%                      ] mul12.nsys-rep[1/1] [===23%                      ] mul12.nsys-rep[1/1] [===24%                      ] mul12.nsys-rep[1/1] [====25%                     ] mul12.nsys-rep[1/1] [====26%                     ] mul12.nsys-rep[1/1] [====27%                     ] mul12.nsys-rep[1/1] [=====29%                    ] mul12.nsys-rep[1/1] [=====30%                    ] mul12.nsys-rep[1/1] [=====31%                    ] mul12.nsys-rep[1/1] [=====32%                    ] mul12.nsys-rep[1/1] [======34%                   ] mul12.nsys-rep[1/1] [======35%                   ] mul12.nsys-rep[1/1] [=======36%                  ] mul12.nsys-rep[1/1] [=======37%                  ] mul12.nsys-rep[1/1] [=======38%                  ] mul12.nsys-rep[1/1] [=======39%                  ] mul12.nsys-rep[1/1] [========40%                 ] mul12.nsys-rep[1/1] [========42%                 ] mul12.nsys-rep[1/1] [=============60%            ] mul12.nsys-rep[1/1] [==============62%           ] mul12.nsys-rep[1/1] [=================73%        ] mul12.nsys-rep[1/1] [========================100%] mul12.nsys-rep[1/1] [========================100%] mul12.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul12.nsys-rep
+Finished at: Sun Feb  1 22:54:38 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul13 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 64 --tokens 4096 --hidden-dim 3072
+Started at: Sun Feb  1 22:54:38 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 64, Tokens: 4096, Effective tokens: 262144
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      262144
+  Hidden dim (K):  3072
+  Total elements:  805,306,368
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [262144, 3072] torch.bfloat16
+  scale:         [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:               1.61 GB (tokens x hidden_dim x 2)
+  Read scale:           6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write x:              1.61 GB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:           1.61 GB
+  Total write:          1.61 GB
+  Total:                3.22 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.6651 ms
+  Std:   0.0059 ms
+  Min:   0.6608 ms
+  Max:   0.6898 ms
+
+Bandwidth:
+  4843.0 GB/s (60.5% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-2216.qdstrm'
+[1/1] [0%                          ] mul13.nsys-rep[1/1] [0%                          ] mul13.nsys-rep[1/1] [0%                          ] mul13.nsys-rep[1/1] [===23%                      ] mul13.nsys-rep[1/1] [===24%                      ] mul13.nsys-rep[1/1] [====25%                     ] mul13.nsys-rep[1/1] [====26%                     ] mul13.nsys-rep[1/1] [====27%                     ] mul13.nsys-rep[1/1] [====28%                     ] mul13.nsys-rep[1/1] [=====29%                    ] mul13.nsys-rep[1/1] [=====30%                    ] mul13.nsys-rep[1/1] [=====31%                    ] mul13.nsys-rep[1/1] [=====32%                    ] mul13.nsys-rep[1/1] [======33%                   ] mul13.nsys-rep[1/1] [======34%                   ] mul13.nsys-rep[1/1] [======35%                   ] mul13.nsys-rep[1/1] [=======36%                  ] mul13.nsys-rep[1/1] [=======37%                  ] mul13.nsys-rep[1/1] [=======38%                  ] mul13.nsys-rep[1/1] [=======39%                  ] mul13.nsys-rep[1/1] [========40%                 ] mul13.nsys-rep[1/1] [========41%                 ] mul13.nsys-rep[1/1] [========42%                 ] mul13.nsys-rep[1/1] [=============60%            ] mul13.nsys-rep[1/1] [==============61%           ] mul13.nsys-rep[1/1] [==============63%           ] mul13.nsys-rep[1/1] [=================74%        ] mul13.nsys-rep[1/1] [========================100%] mul13.nsys-rep[1/1] [========================100%] mul13.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul13.nsys-rep
+Finished at: Sun Feb  1 22:54:50 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul14 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 64 --tokens 8192 --hidden-dim 3072
+Started at: Sun Feb  1 22:54:50 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 64, Tokens: 8192, Effective tokens: 524288
+  Hidden dim: 3072
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      524288
+  Hidden dim (K):  3072
+  Total elements:  1,610,612,736
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [524288, 3072] torch.bfloat16
+  scale:         [3072] torch.bfloat16
+  bias:          [3072] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:               3.22 GB (tokens x hidden_dim x 2)
+  Read scale:           6.14 KB (hidden_dim x 2, L2 cached)
+  Read bias:            6.14 KB (hidden_dim x 2, L2 cached)
+  Write x:              3.22 GB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:           3.22 GB
+  Total write:          3.22 GB
+  Total:                6.44 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  1.3147 ms
+  Std:   0.0057 ms
+  Min:   1.3103 ms
+  Max:   1.3563 ms
+
+Bandwidth:
+  4900.2 GB/s (61.3% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-744a.qdstrm'
+[1/1] [0%                          ] mul14.nsys-rep[1/1] [0%                          ] mul14.nsys-rep[1/1] [0%                          ] mul14.nsys-rep[1/1] [===22%                      ] mul14.nsys-rep[1/1] [===23%                      ] mul14.nsys-rep[1/1] [===24%                      ] mul14.nsys-rep[1/1] [====26%                     ] mul14.nsys-rep[1/1] [====27%                     ] mul14.nsys-rep[1/1] [====28%                     ] mul14.nsys-rep[1/1] [=====29%                    ] mul14.nsys-rep[1/1] [=====30%                    ] mul14.nsys-rep[1/1] [=====31%                    ] mul14.nsys-rep[1/1] [======33%                   ] mul14.nsys-rep[1/1] [======34%                   ] mul14.nsys-rep[1/1] [======35%                   ] mul14.nsys-rep[1/1] [=======36%                  ] mul14.nsys-rep[1/1] [=======37%                  ] mul14.nsys-rep[1/1] [=======38%                  ] mul14.nsys-rep[1/1] [=======39%                  ] mul14.nsys-rep[1/1] [========40%                 ] mul14.nsys-rep[1/1] [=========46%                ] mul14.nsys-rep[1/1] [==========47%               ] mul14.nsys-rep[1/1] [=============58%            ] mul14.nsys-rep[1/1] [==============61%           ] mul14.nsys-rep[1/1] [=================72%        ] mul14.nsys-rep[1/1] [=================73%        ] mul14.nsys-rep[1/1] [========================100%] mul14.nsys-rep[1/1] [========================100%] mul14.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul14.nsys-rep
+Finished at: Sun Feb  1 22:55:03 UTC 2026
+
+========================================
+Running: nsys profile -o mul/mul15 python scripts/profile_mul_add_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 16 --tokens 4096 --hidden-dim 8192
+Started at: Sun Feb  1 22:55:03 UTC 2026
+----------------------------------------
+Profiling nunchaku mul_add kernel...
+  Batch size: 16, Tokens: 4096, Effective tokens: 65536
+  Hidden dim: 8192
+  Clear L2 cache: True
+
+==========================================================================
+mul_add Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      65536
+  Hidden dim (K):  8192
+  Total elements:  536,870,912
+  Data type:       torch.bfloat16 (2 bytes/element)
+
+Tensor Shapes:
+  x (in/out):    [65536, 8192] torch.bfloat16
+  scale:         [8192] torch.bfloat16
+  bias:          [8192] torch.bfloat16
+
+Operation: x[i] = x[i] * scale[i % hidden_dim] + bias[i % hidden_dim]
+
+Memory Traffic:
+  Read x:               1.07 GB (tokens x hidden_dim x 2)
+  Read scale:          16.38 KB (hidden_dim x 2, L2 cached)
+  Read bias:           16.38 KB (hidden_dim x 2, L2 cached)
+  Write x:              1.07 GB (tokens x hidden_dim x 2)
+  ------------------------------------
+  Total read:           1.07 GB
+  Total write:          1.07 GB
+  Total:                2.15 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.4481 ms
+  Std:   0.0078 ms
+  Min:   0.4443 ms
+  Max:   0.5199 ms
+
+Bandwidth:
+  4792.1 GB/s (59.9% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-ee03.qdstrm'
+[1/1] [0%                          ] mul15.nsys-rep[1/1] [0%                          ] mul15.nsys-rep[1/1] [===22%                      ] mul15.nsys-rep[1/1] [===23%                      ] mul15.nsys-rep[1/1] [===24%                      ] mul15.nsys-rep[1/1] [====25%                     ] mul15.nsys-rep[1/1] [====27%                     ] mul15.nsys-rep[1/1] [====28%                     ] mul15.nsys-rep[1/1] [=====29%                    ] mul15.nsys-rep[1/1] [=====30%                    ] mul15.nsys-rep[1/1] [=====31%                    ] mul15.nsys-rep[1/1] [=====32%                    ] mul15.nsys-rep[1/1] [======34%                   ] mul15.nsys-rep[1/1] [======35%                   ] mul15.nsys-rep[1/1] [=======36%                  ] mul15.nsys-rep[1/1] [=======37%                  ] mul15.nsys-rep[1/1] [=======38%                  ] mul15.nsys-rep[1/1] [=======39%                  ] mul15.nsys-rep[1/1] [========40%                 ] mul15.nsys-rep[1/1] [========42%                 ] mul15.nsys-rep[1/1] [=============60%            ] mul15.nsys-rep[1/1] [==============62%           ] mul15.nsys-rep[1/1] [=================73%        ] mul15.nsys-rep[1/1] [========================100%] mul15.nsys-rep[1/1] [========================100%] mul15.nsys-rep
+Generated:
+    /home/samuel/nunchaku/mul/mul15.nsys-rep
+Finished at: Sun Feb  1 22:55:16 UTC 2026
+
+All runs completed successfully.

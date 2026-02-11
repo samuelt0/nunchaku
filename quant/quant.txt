@@ -1,0 +1,811 @@
+========================================
+Running: nsys profile -o quant/quant1 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 1024 --hidden-dim 3072 --fp4
+Started at: Sun Feb  1 22:21:37 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 1, Tokens: 1024, Effective tokens: 1024
+  Hidden dim: 3072, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      1024
+  Hidden dim (K):  3072
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 1024
+
+Tensor Shapes:
+  input:         [1024, 3072] bf16
+  output:        [1024, 1536] uint8
+  oscales:       [192, 1024] fp8_e4m3
+  smooth:        [3072] bf16
+  lora_down:     [3072, 64] bf16 (not used by kernel)
+  lora_act_out:  [1024, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:           6.29 MB (M x K x 2 bytes)
+  Smooth read:          6.14 KB (K x 2 bytes)
+  Output write:         1.57 MB (M_pad x K/2 bytes)
+  Scales write:       196.61 KB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:           6.30 MB
+  Total write:          1.77 MB
+  Total:                8.07 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0359 ms
+  Std:   0.0070 ms
+  Min:   0.0308 ms
+  Max:   0.0807 ms
+
+Bandwidth:
+  224.8 GB/s (2.8% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-8881.qdstrm'
+[1/1] [0%                          ] quant1.nsys-rep[1/1] [0%                          ] quant1.nsys-rep[1/1] [===23%                      ] quant1.nsys-rep[1/1] [===24%                      ] quant1.nsys-rep[1/1] [====25%                     ] quant1.nsys-rep[1/1] [====26%                     ] quant1.nsys-rep[1/1] [====27%                     ] quant1.nsys-rep[1/1] [====28%                     ] quant1.nsys-rep[1/1] [=====29%                    ] quant1.nsys-rep[1/1] [=====30%                    ] quant1.nsys-rep[1/1] [=====31%                    ] quant1.nsys-rep[1/1] [======34%                   ] quant1.nsys-rep[1/1] [======35%                   ] quant1.nsys-rep[1/1] [=======36%                  ] quant1.nsys-rep[1/1] [=======37%                  ] quant1.nsys-rep[1/1] [=======38%                  ] quant1.nsys-rep[1/1] [=======39%                  ] quant1.nsys-rep[1/1] [========40%                 ] quant1.nsys-rep[1/1] [=========46%                ] quant1.nsys-rep[1/1] [==========48%               ] quant1.nsys-rep[1/1] [=============59%            ] quant1.nsys-rep[1/1] [=============60%            ] quant1.nsys-rep[1/1] [==============62%           ] quant1.nsys-rep[1/1] [=================74%        ] quant1.nsys-rep[1/1] [========================100%] quant1.nsys-rep[1/1] [========================100%] quant1.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant1.nsys-rep
+Finished at: Sun Feb  1 22:21:52 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant2 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 2048 --hidden-dim 3072 --fp4
+Started at: Sun Feb  1 22:21:52 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 1, Tokens: 2048, Effective tokens: 2048
+  Hidden dim: 3072, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      2048
+  Hidden dim (K):  3072
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 2048
+
+Tensor Shapes:
+  input:         [2048, 3072] bf16
+  output:        [2048, 1536] uint8
+  oscales:       [192, 2048] fp8_e4m3
+  smooth:        [3072] bf16
+  lora_down:     [3072, 64] bf16 (not used by kernel)
+  lora_act_out:  [2048, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:          12.58 MB (M x K x 2 bytes)
+  Smooth read:          6.14 KB (K x 2 bytes)
+  Output write:         3.15 MB (M_pad x K/2 bytes)
+  Scales write:       393.22 KB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:          12.59 MB
+  Total write:          3.54 MB
+  Total:               16.13 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0381 ms
+  Std:   0.0061 ms
+  Min:   0.0348 ms
+  Max:   0.0916 ms
+
+Bandwidth:
+  422.8 GB/s (5.3% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-bca0.qdstrm'
+[1/1] [0%                          ] quant2.nsys-rep[1/1] [0%                          ] quant2.nsys-rep[1/1] [0%                          ] quant2.nsys-rep[1/1] [===22%                      ] quant2.nsys-rep[1/1] [===23%                      ] quant2.nsys-rep[1/1] [===24%                      ] quant2.nsys-rep[1/1] [====25%                     ] quant2.nsys-rep[1/1] [====26%                     ] quant2.nsys-rep[1/1] [====27%                     ] quant2.nsys-rep[1/1] [====28%                     ] quant2.nsys-rep[1/1] [=====29%                    ] quant2.nsys-rep[1/1] [=====30%                    ] quant2.nsys-rep[1/1] [=====32%                    ] quant2.nsys-rep[1/1] [======33%                   ] quant2.nsys-rep[1/1] [======34%                   ] quant2.nsys-rep[1/1] [======35%                   ] quant2.nsys-rep[1/1] [=======36%                  ] quant2.nsys-rep[1/1] [=======37%                  ] quant2.nsys-rep[1/1] [=======38%                  ] quant2.nsys-rep[1/1] [=======39%                  ] quant2.nsys-rep[1/1] [=========45%                ] quant2.nsys-rep[1/1] [==========47%               ] quant2.nsys-rep[1/1] [=============59%            ] quant2.nsys-rep[1/1] [==============61%           ] quant2.nsys-rep[1/1] [=================73%        ] quant2.nsys-rep[1/1] [========================100%] quant2.nsys-rep[1/1] [========================100%] quant2.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant2.nsys-rep
+Finished at: Sun Feb  1 22:22:04 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant3 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 3072 --fp4
+Started at: Sun Feb  1 22:22:04 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 3072, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  3072
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 4096
+
+Tensor Shapes:
+  input:         [4096, 3072] bf16
+  output:        [4096, 1536] uint8
+  oscales:       [192, 4096] fp8_e4m3
+  smooth:        [3072] bf16
+  lora_down:     [3072, 64] bf16 (not used by kernel)
+  lora_act_out:  [4096, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:          25.17 MB (M x K x 2 bytes)
+  Smooth read:          6.14 KB (K x 2 bytes)
+  Output write:         6.29 MB (M_pad x K/2 bytes)
+  Scales write:       786.43 KB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:          25.17 MB
+  Total write:          7.08 MB
+  Total:               32.25 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0495 ms
+  Std:   0.0066 ms
+  Min:   0.0451 ms
+  Max:   0.0948 ms
+
+Bandwidth:
+  652.0 GB/s (8.2% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-22b1.qdstrm'
+[1/1] [0%                          ] quant3.nsys-rep[1/1] [0%                          ] quant3.nsys-rep[1/1] [0%                          ] quant3.nsys-rep[1/1] [===23%                      ] quant3.nsys-rep[1/1] [===24%                      ] quant3.nsys-rep[1/1] [====25%                     ] quant3.nsys-rep[1/1] [====26%                     ] quant3.nsys-rep[1/1] [====27%                     ] quant3.nsys-rep[1/1] [====28%                     ] quant3.nsys-rep[1/1] [=====29%                    ] quant3.nsys-rep[1/1] [=====30%                    ] quant3.nsys-rep[1/1] [=====31%                    ] quant3.nsys-rep[1/1] [======33%                   ] quant3.nsys-rep[1/1] [======34%                   ] quant3.nsys-rep[1/1] [======35%                   ] quant3.nsys-rep[1/1] [=======36%                  ] quant3.nsys-rep[1/1] [=======37%                  ] quant3.nsys-rep[1/1] [=======38%                  ] quant3.nsys-rep[1/1] [=======39%                  ] quant3.nsys-rep[1/1] [========40%                 ] quant3.nsys-rep[1/1] [=========46%                ] quant3.nsys-rep[1/1] [==========48%               ] quant3.nsys-rep[1/1] [=============60%            ] quant3.nsys-rep[1/1] [==============61%           ] quant3.nsys-rep[1/1] [==============62%           ] quant3.nsys-rep[1/1] [=================74%        ] quant3.nsys-rep[1/1] [========================100%] quant3.nsys-rep[1/1] [========================100%] quant3.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant3.nsys-rep
+Finished at: Sun Feb  1 22:22:16 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant4 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 8192 --hidden-dim 3072 --fp4
+Started at: Sun Feb  1 22:22:16 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 1, Tokens: 8192, Effective tokens: 8192
+  Hidden dim: 3072, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      8192
+  Hidden dim (K):  3072
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 8192
+
+Tensor Shapes:
+  input:         [8192, 3072] bf16
+  output:        [8192, 1536] uint8
+  oscales:       [192, 8192] fp8_e4m3
+  smooth:        [3072] bf16
+  lora_down:     [3072, 64] bf16 (not used by kernel)
+  lora_act_out:  [8192, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:          50.33 MB (M x K x 2 bytes)
+  Smooth read:          6.14 KB (K x 2 bytes)
+  Output write:        12.58 MB (M_pad x K/2 bytes)
+  Scales write:         1.57 MB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:          50.34 MB
+  Total write:         14.16 MB
+  Total:               64.49 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0701 ms
+  Std:   0.0055 ms
+  Min:   0.0658 ms
+  Max:   0.1097 ms
+
+Bandwidth:
+  920.1 GB/s (11.5% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-fbd8.qdstrm'
+[1/1] [0%                          ] quant4.nsys-rep[1/1] [0%                          ] quant4.nsys-rep[1/1] [0%                          ] quant4.nsys-rep[1/1] [===22%                      ] quant4.nsys-rep[1/1] [===23%                      ] quant4.nsys-rep[1/1] [===24%                      ] quant4.nsys-rep[1/1] [====26%                     ] quant4.nsys-rep[1/1] [====27%                     ] quant4.nsys-rep[1/1] [====28%                     ] quant4.nsys-rep[1/1] [=====29%                    ] quant4.nsys-rep[1/1] [=====30%                    ] quant4.nsys-rep[1/1] [=====31%                    ] quant4.nsys-rep[1/1] [======33%                   ] quant4.nsys-rep[1/1] [======34%                   ] quant4.nsys-rep[1/1] [======35%                   ] quant4.nsys-rep[1/1] [=======36%                  ] quant4.nsys-rep[1/1] [=======37%                  ] quant4.nsys-rep[1/1] [=======38%                  ] quant4.nsys-rep[1/1] [=======39%                  ] quant4.nsys-rep[1/1] [========40%                 ] quant4.nsys-rep[1/1] [========42%                 ] quant4.nsys-rep[1/1] [=============59%            ] quant4.nsys-rep[1/1] [=============60%            ] quant4.nsys-rep[1/1] [==============62%           ] quant4.nsys-rep[1/1] [=================73%        ] quant4.nsys-rep[1/1] [========================100%] quant4.nsys-rep[1/1] [========================100%] quant4.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant4.nsys-rep
+Finished at: Sun Feb  1 22:22:28 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant5 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 2048 --fp4
+Started at: Sun Feb  1 22:22:28 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 2048, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  2048
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 4096
+
+Tensor Shapes:
+  input:         [4096, 2048] bf16
+  output:        [4096, 1024] uint8
+  oscales:       [128, 4096] fp8_e4m3
+  smooth:        [2048] bf16
+  lora_down:     [2048, 64] bf16 (not used by kernel)
+  lora_act_out:  [4096, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:          16.78 MB (M x K x 2 bytes)
+  Smooth read:          4.10 KB (K x 2 bytes)
+  Output write:         4.19 MB (M_pad x K/2 bytes)
+  Scales write:       524.29 KB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:          16.78 MB
+  Total write:          4.72 MB
+  Total:               21.50 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0451 ms
+  Std:   0.0188 ms
+  Min:   0.0371 ms
+  Max:   0.2226 ms
+
+Bandwidth:
+  476.6 GB/s (6.0% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-ec61.qdstrm'
+[1/1] [0%                          ] quant5.nsys-rep[1/1] [0%                          ] quant5.nsys-rep[1/1] [0%                          ] quant5.nsys-rep[1/1] [===22%                      ] quant5.nsys-rep[1/1] [===23%                      ] quant5.nsys-rep[1/1] [===24%                      ] quant5.nsys-rep[1/1] [====25%                     ] quant5.nsys-rep[1/1] [====26%                     ] quant5.nsys-rep[1/1] [====27%                     ] quant5.nsys-rep[1/1] [====28%                     ] quant5.nsys-rep[1/1] [=====29%                    ] quant5.nsys-rep[1/1] [=====30%                    ] quant5.nsys-rep[1/1] [=====31%                    ] quant5.nsys-rep[1/1] [=====32%                    ] quant5.nsys-rep[1/1] [======33%                   ] quant5.nsys-rep[1/1] [======34%                   ] quant5.nsys-rep[1/1] [======35%                   ] quant5.nsys-rep[1/1] [=======36%                  ] quant5.nsys-rep[1/1] [=======37%                  ] quant5.nsys-rep[1/1] [=======38%                  ] quant5.nsys-rep[1/1] [=======39%                  ] quant5.nsys-rep[1/1] [========41%                 ] quant5.nsys-rep[1/1] [=============58%            ] quant5.nsys-rep[1/1] [=============59%            ] quant5.nsys-rep[1/1] [==============61%           ] quant5.nsys-rep[1/1] [=================73%        ] quant5.nsys-rep[1/1] [========================100%] quant5.nsys-rep[1/1] [========================100%] quant5.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant5.nsys-rep
+Finished at: Sun Feb  1 22:22:41 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant6 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 4096 --fp4
+Started at: Sun Feb  1 22:22:41 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 4096, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  4096
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 4096
+
+Tensor Shapes:
+  input:         [4096, 4096] bf16
+  output:        [4096, 2048] uint8
+  oscales:       [256, 4096] fp8_e4m3
+  smooth:        [4096] bf16
+  lora_down:     [4096, 64] bf16 (not used by kernel)
+  lora_act_out:  [4096, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:          33.55 MB (M x K x 2 bytes)
+  Smooth read:          8.19 KB (K x 2 bytes)
+  Output write:         8.39 MB (M_pad x K/2 bytes)
+  Scales write:         1.05 MB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:          33.56 MB
+  Total write:          9.44 MB
+  Total:               43.00 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0542 ms
+  Std:   0.0048 ms
+  Min:   0.0508 ms
+  Max:   0.0933 ms
+
+Bandwidth:
+  793.3 GB/s (9.9% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-aab4.qdstrm'
+[1/1] [0%                          ] quant6.nsys-rep[1/1] [0%                          ] quant6.nsys-rep[1/1] [0%                          ] quant6.nsys-rep[1/1] [===22%                      ] quant6.nsys-rep[1/1] [===23%                      ] quant6.nsys-rep[1/1] [===24%                      ] quant6.nsys-rep[1/1] [====25%                     ] quant6.nsys-rep[1/1] [====26%                     ] quant6.nsys-rep[1/1] [====27%                     ] quant6.nsys-rep[1/1] [====28%                     ] quant6.nsys-rep[1/1] [=====29%                    ] quant6.nsys-rep[1/1] [=====30%                    ] quant6.nsys-rep[1/1] [=====31%                    ] quant6.nsys-rep[1/1] [======33%                   ] quant6.nsys-rep[1/1] [======34%                   ] quant6.nsys-rep[1/1] [======35%                   ] quant6.nsys-rep[1/1] [=======36%                  ] quant6.nsys-rep[1/1] [=======37%                  ] quant6.nsys-rep[1/1] [=======38%                  ] quant6.nsys-rep[1/1] [=======39%                  ] quant6.nsys-rep[1/1] [========40%                 ] quant6.nsys-rep[1/1] [========42%                 ] quant6.nsys-rep[1/1] [=============59%            ] quant6.nsys-rep[1/1] [=============60%            ] quant6.nsys-rep[1/1] [==============61%           ] quant6.nsys-rep[1/1] [=================73%        ] quant6.nsys-rep[1/1] [========================100%] quant6.nsys-rep[1/1] [========================100%] quant6.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant6.nsys-rep
+Finished at: Sun Feb  1 22:22:54 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant7 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 1 --tokens 4096 --hidden-dim 8192 --fp4
+Started at: Sun Feb  1 22:22:54 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 1, Tokens: 4096, Effective tokens: 4096
+  Hidden dim: 8192, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      4096
+  Hidden dim (K):  8192
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 4096
+
+Tensor Shapes:
+  input:         [4096, 8192] bf16
+  output:        [4096, 4096] uint8
+  oscales:       [512, 4096] fp8_e4m3
+  smooth:        [8192] bf16
+  lora_down:     [8192, 64] bf16 (not used by kernel)
+  lora_act_out:  [4096, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:          67.11 MB (M x K x 2 bytes)
+  Smooth read:         16.38 KB (K x 2 bytes)
+  Output write:        16.78 MB (M_pad x K/2 bytes)
+  Scales write:         2.10 MB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:          67.13 MB
+  Total write:         18.87 MB
+  Total:               86.00 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0863 ms
+  Std:   0.0066 ms
+  Min:   0.0816 ms
+  Max:   0.1291 ms
+
+Bandwidth:
+  996.6 GB/s (12.5% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-d9b1.qdstrm'
+[1/1] [0%                          ] quant7.nsys-rep[1/1] [0%                          ] quant7.nsys-rep[1/1] [0%                          ] quant7.nsys-rep[1/1] [===22%                      ] quant7.nsys-rep[1/1] [===23%                      ] quant7.nsys-rep[1/1] [===24%                      ] quant7.nsys-rep[1/1] [====27%                     ] quant7.nsys-rep[1/1] [====28%                     ] quant7.nsys-rep[1/1] [=====29%                    ] quant7.nsys-rep[1/1] [=====30%                    ] quant7.nsys-rep[1/1] [=====31%                    ] quant7.nsys-rep[1/1] [=====32%                    ] quant7.nsys-rep[1/1] [======34%                   ] quant7.nsys-rep[1/1] [======35%                   ] quant7.nsys-rep[1/1] [=======36%                  ] quant7.nsys-rep[1/1] [=======37%                  ] quant7.nsys-rep[1/1] [=======38%                  ] quant7.nsys-rep[1/1] [=======39%                  ] quant7.nsys-rep[1/1] [========40%                 ] quant7.nsys-rep[1/1] [========42%                 ] quant7.nsys-rep[1/1] [=============59%            ] quant7.nsys-rep[1/1] [=============60%            ] quant7.nsys-rep[1/1] [==============61%           ] quant7.nsys-rep[1/1] [=================73%        ] quant7.nsys-rep[1/1] [========================100%] quant7.nsys-rep[1/1] [========================100%] quant7.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant7.nsys-rep
+Finished at: Sun Feb  1 22:23:06 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant8 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 4 --tokens 2048 --hidden-dim 3072 --fp4
+Started at: Sun Feb  1 22:23:06 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 4, Tokens: 2048, Effective tokens: 8192
+  Hidden dim: 3072, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      8192
+  Hidden dim (K):  3072
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 8192
+
+Tensor Shapes:
+  input:         [8192, 3072] bf16
+  output:        [8192, 1536] uint8
+  oscales:       [192, 8192] fp8_e4m3
+  smooth:        [3072] bf16
+  lora_down:     [3072, 64] bf16 (not used by kernel)
+  lora_act_out:  [8192, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:          50.33 MB (M x K x 2 bytes)
+  Smooth read:          6.14 KB (K x 2 bytes)
+  Output write:        12.58 MB (M_pad x K/2 bytes)
+  Scales write:         1.57 MB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:          50.34 MB
+  Total write:         14.16 MB
+  Total:               64.49 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.0700 ms
+  Std:   0.0051 ms
+  Min:   0.0659 ms
+  Max:   0.1118 ms
+
+Bandwidth:
+  921.6 GB/s (11.5% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-9b6b.qdstrm'
+[1/1] [0%                          ] quant8.nsys-rep[1/1] [0%                          ] quant8.nsys-rep[1/1] [0%                          ] quant8.nsys-rep[1/1] [===22%                      ] quant8.nsys-rep[1/1] [===23%                      ] quant8.nsys-rep[1/1] [===24%                      ] quant8.nsys-rep[1/1] [====25%                     ] quant8.nsys-rep[1/1] [====26%                     ] quant8.nsys-rep[1/1] [====27%                     ] quant8.nsys-rep[1/1] [====28%                     ] quant8.nsys-rep[1/1] [=====29%                    ] quant8.nsys-rep[1/1] [=====30%                    ] quant8.nsys-rep[1/1] [=====31%                    ] quant8.nsys-rep[1/1] [======33%                   ] quant8.nsys-rep[1/1] [======34%                   ] quant8.nsys-rep[1/1] [======35%                   ] quant8.nsys-rep[1/1] [=======36%                  ] quant8.nsys-rep[1/1] [=======37%                  ] quant8.nsys-rep[1/1] [=======38%                  ] quant8.nsys-rep[1/1] [=======39%                  ] quant8.nsys-rep[1/1] [========40%                 ] quant8.nsys-rep[1/1] [========42%                 ] quant8.nsys-rep[1/1] [=========43%                ] quant8.nsys-rep[1/1] [=============60%            ] quant8.nsys-rep[1/1] [==============61%           ] quant8.nsys-rep[1/1] [=================73%        ] quant8.nsys-rep[1/1] [========================100%] quant8.nsys-rep[1/1] [========================100%] quant8.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant8.nsys-rep
+Finished at: Sun Feb  1 22:23:19 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant9 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 4 --tokens 4096 --hidden-dim 3072 --fp4
+Started at: Sun Feb  1 22:23:19 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 4, Tokens: 4096, Effective tokens: 16384
+  Hidden dim: 3072, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      16384
+  Hidden dim (K):  3072
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 16384
+
+Tensor Shapes:
+  input:         [16384, 3072] bf16
+  output:        [16384, 1536] uint8
+  oscales:       [192, 16384] fp8_e4m3
+  smooth:        [3072] bf16
+  lora_down:     [3072, 64] bf16 (not used by kernel)
+  lora_act_out:  [16384, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:         100.66 MB (M x K x 2 bytes)
+  Smooth read:          6.14 KB (K x 2 bytes)
+  Output write:        25.17 MB (M_pad x K/2 bytes)
+  Scales write:         3.15 MB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:         100.67 MB
+  Total write:         28.31 MB
+  Total:              128.98 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.1223 ms
+  Std:   0.0215 ms
+  Min:   0.1125 ms
+  Max:   0.2890 ms
+
+Bandwidth:
+  1054.8 GB/s (13.2% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-2d9a.qdstrm'
+[1/1] [0%                          ] quant9.nsys-rep[1/1] [0%                          ] quant9.nsys-rep[1/1] [0%                          ] quant9.nsys-rep[1/1] [===23%                      ] quant9.nsys-rep[1/1] [===24%                      ] quant9.nsys-rep[1/1] [====25%                     ] quant9.nsys-rep[1/1] [====27%                     ] quant9.nsys-rep[1/1] [====28%                     ] quant9.nsys-rep[1/1] [=====29%                    ] quant9.nsys-rep[1/1] [=====30%                    ] quant9.nsys-rep[1/1] [=====31%                    ] quant9.nsys-rep[1/1] [=====32%                    ] quant9.nsys-rep[1/1] [======34%                   ] quant9.nsys-rep[1/1] [======35%                   ] quant9.nsys-rep[1/1] [=======36%                  ] quant9.nsys-rep[1/1] [=======37%                  ] quant9.nsys-rep[1/1] [=======38%                  ] quant9.nsys-rep[1/1] [=======39%                  ] quant9.nsys-rep[1/1] [========40%                 ] quant9.nsys-rep[1/1] [========41%                 ] quant9.nsys-rep[1/1] [=========46%                ] quant9.nsys-rep[1/1] [==========48%               ] quant9.nsys-rep[1/1] [=============59%            ] quant9.nsys-rep[1/1] [=============60%            ] quant9.nsys-rep[1/1] [==============62%           ] quant9.nsys-rep[1/1] [=================74%        ] quant9.nsys-rep[1/1] [========================100%] quant9.nsys-rep[1/1] [========================100%] quant9.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant9.nsys-rep
+Finished at: Sun Feb  1 22:23:32 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant10 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 4 --tokens 8192 --hidden-dim 3072 --fp4
+Started at: Sun Feb  1 22:23:32 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 4, Tokens: 8192, Effective tokens: 32768
+  Hidden dim: 3072, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      32768
+  Hidden dim (K):  3072
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 32768
+
+Tensor Shapes:
+  input:         [32768, 3072] bf16
+  output:        [32768, 1536] uint8
+  oscales:       [192, 32768] fp8_e4m3
+  smooth:        [3072] bf16
+  lora_down:     [3072, 64] bf16 (not used by kernel)
+  lora_act_out:  [32768, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:         201.33 MB (M x K x 2 bytes)
+  Smooth read:          6.14 KB (K x 2 bytes)
+  Output write:        50.33 MB (M_pad x K/2 bytes)
+  Scales write:         6.29 MB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:         201.33 MB
+  Total write:         56.62 MB
+  Total:              257.96 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.1924 ms
+  Std:   0.0082 ms
+  Min:   0.1854 ms
+  Max:   0.2579 ms
+
+Bandwidth:
+  1341.0 GB/s (16.8% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-9a41.qdstrm'
+[1/1] [0%                          ] quant10.nsys-rep[1/1] [0%                          ] quant10.nsys-rep[1/1] [0%                          ] quant10.nsys-rep[1/1] [===22%                      ] quant10.nsys-rep[1/1] [===23%                      ] quant10.nsys-rep[1/1] [===24%                      ] quant10.nsys-rep[1/1] [====26%                     ] quant10.nsys-rep[1/1] [====27%                     ] quant10.nsys-rep[1/1] [====28%                     ] quant10.nsys-rep[1/1] [=====29%                    ] quant10.nsys-rep[1/1] [=====30%                    ] quant10.nsys-rep[1/1] [=====31%                    ] quant10.nsys-rep[1/1] [======33%                   ] quant10.nsys-rep[1/1] [======34%                   ] quant10.nsys-rep[1/1] [======35%                   ] quant10.nsys-rep[1/1] [=======36%                  ] quant10.nsys-rep[1/1] [=======37%                  ] quant10.nsys-rep[1/1] [=======38%                  ] quant10.nsys-rep[1/1] [=======39%                  ] quant10.nsys-rep[1/1] [========40%                 ] quant10.nsys-rep[1/1] [========42%                 ] quant10.nsys-rep[1/1] [=============58%            ] quant10.nsys-rep[1/1] [=============60%            ] quant10.nsys-rep[1/1] [=================72%        ] quant10.nsys-rep[1/1] [=================73%        ] quant10.nsys-rep[1/1] [========================100%] quant10.nsys-rep[1/1] [========================100%] quant10.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant10.nsys-rep
+Finished at: Sun Feb  1 22:23:46 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant11 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 16 --tokens 4096 --hidden-dim 3072 --fp4
+Started at: Sun Feb  1 22:23:46 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 16, Tokens: 4096, Effective tokens: 65536
+  Hidden dim: 3072, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      65536
+  Hidden dim (K):  3072
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 65536
+
+Tensor Shapes:
+  input:         [65536, 3072] bf16
+  output:        [65536, 1536] uint8
+  oscales:       [192, 65536] fp8_e4m3
+  smooth:        [3072] bf16
+  lora_down:     [3072, 64] bf16 (not used by kernel)
+  lora_act_out:  [65536, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:         402.65 MB (M x K x 2 bytes)
+  Smooth read:          6.14 KB (K x 2 bytes)
+  Output write:       100.66 MB (M_pad x K/2 bytes)
+  Scales write:        12.58 MB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:         402.66 MB
+  Total write:        113.25 MB
+  Total:              515.91 MB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.3431 ms
+  Std:   0.0071 ms
+  Min:   0.3350 ms
+  Max:   0.3942 ms
+
+Bandwidth:
+  1503.5 GB/s (18.8% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-5a1f.qdstrm'
+[1/1] [0%                          ] quant11.nsys-rep[1/1] [0%                          ] quant11.nsys-rep[1/1] [0%                          ] quant11.nsys-rep[1/1] [===22%                      ] quant11.nsys-rep[1/1] [===23%                      ] quant11.nsys-rep[1/1] [===24%                      ] quant11.nsys-rep[1/1] [====26%                     ] quant11.nsys-rep[1/1] [====27%                     ] quant11.nsys-rep[1/1] [====28%                     ] quant11.nsys-rep[1/1] [=====29%                    ] quant11.nsys-rep[1/1] [=====30%                    ] quant11.nsys-rep[1/1] [======33%                   ] quant11.nsys-rep[1/1] [======34%                   ] quant11.nsys-rep[1/1] [======35%                   ] quant11.nsys-rep[1/1] [=======36%                  ] quant11.nsys-rep[1/1] [=======37%                  ] quant11.nsys-rep[1/1] [=======38%                  ] quant11.nsys-rep[1/1] [=======39%                  ] quant11.nsys-rep[1/1] [=========46%                ] quant11.nsys-rep[1/1] [==========47%               ] quant11.nsys-rep[1/1] [=============59%            ] quant11.nsys-rep[1/1] [==============61%           ] quant11.nsys-rep[1/1] [=================73%        ] quant11.nsys-rep[1/1] [========================100%] quant11.nsys-rep[1/1] [========================100%] quant11.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant11.nsys-rep
+Finished at: Sun Feb  1 22:23:59 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant12 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 16 --tokens 8192 --hidden-dim 3072 --fp4
+Started at: Sun Feb  1 22:23:59 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 16, Tokens: 8192, Effective tokens: 131072
+  Hidden dim: 3072, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      131072
+  Hidden dim (K):  3072
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 131072
+
+Tensor Shapes:
+  input:         [131072, 3072] bf16
+  output:        [131072, 1536] uint8
+  oscales:       [192, 131072] fp8_e4m3
+  smooth:        [3072] bf16
+  lora_down:     [3072, 64] bf16 (not used by kernel)
+  lora_act_out:  [131072, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:         805.31 MB (M x K x 2 bytes)
+  Smooth read:          6.14 KB (K x 2 bytes)
+  Output write:       201.33 MB (M_pad x K/2 bytes)
+  Scales write:        25.17 MB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:         805.31 MB
+  Total write:        226.49 MB
+  Total:                1.03 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.6903 ms
+  Std:   0.0130 ms
+  Min:   0.6722 ms
+  Max:   0.7978 ms
+
+Bandwidth:
+  1494.7 GB/s (18.7% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-8246.qdstrm'
+[1/1] [0%                          ] quant12.nsys-rep[1/1] [0%                          ] quant12.nsys-rep[1/1] [0%                          ] quant12.nsys-rep[1/1] [===22%                      ] quant12.nsys-rep[1/1] [===23%                      ] quant12.nsys-rep[1/1] [===24%                      ] quant12.nsys-rep[1/1] [====26%                     ] quant12.nsys-rep[1/1] [====27%                     ] quant12.nsys-rep[1/1] [====28%                     ] quant12.nsys-rep[1/1] [=====29%                    ] quant12.nsys-rep[1/1] [=====30%                    ] quant12.nsys-rep[1/1] [=====31%                    ] quant12.nsys-rep[1/1] [=====32%                    ] quant12.nsys-rep[1/1] [======33%                   ] quant12.nsys-rep[1/1] [======34%                   ] quant12.nsys-rep[1/1] [======35%                   ] quant12.nsys-rep[1/1] [=======36%                  ] quant12.nsys-rep[1/1] [=======37%                  ] quant12.nsys-rep[1/1] [=======38%                  ] quant12.nsys-rep[1/1] [=======39%                  ] quant12.nsys-rep[1/1] [========41%                 ] quant12.nsys-rep[1/1] [=============58%            ] quant12.nsys-rep[1/1] [=============59%            ] quant12.nsys-rep[1/1] [==============61%           ] quant12.nsys-rep[1/1] [=================73%        ] quant12.nsys-rep[1/1] [========================100%] quant12.nsys-rep[1/1] [========================100%] quant12.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant12.nsys-rep
+Finished at: Sun Feb  1 22:24:13 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant13 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 64 --tokens 4096 --hidden-dim 3072 --fp4
+Started at: Sun Feb  1 22:24:13 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 64, Tokens: 4096, Effective tokens: 262144
+  Hidden dim: 3072, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      262144
+  Hidden dim (K):  3072
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 262144
+
+Tensor Shapes:
+  input:         [262144, 3072] bf16
+  output:        [262144, 1536] uint8
+  oscales:       [192, 262144] fp8_e4m3
+  smooth:        [3072] bf16
+  lora_down:     [3072, 64] bf16 (not used by kernel)
+  lora_act_out:  [262144, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:           1.61 GB (M x K x 2 bytes)
+  Smooth read:          6.14 KB (K x 2 bytes)
+  Output write:       402.65 MB (M_pad x K/2 bytes)
+  Scales write:        50.33 MB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:           1.61 GB
+  Total write:        452.98 MB
+  Total:                2.06 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  1.3909 ms
+  Std:   0.0128 ms
+  Min:   1.3569 ms
+  Max:   1.4293 ms
+
+Bandwidth:
+  1483.7 GB/s (18.5% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-04af.qdstrm'
+[1/1] [0%                          ] quant13.nsys-rep[1/1] [0%                          ] quant13.nsys-rep[1/1] [0%                          ] quant13.nsys-rep[1/1] [===22%                      ] quant13.nsys-rep[1/1] [===23%                      ] quant13.nsys-rep[1/1] [===24%                      ] quant13.nsys-rep[1/1] [====25%                     ] quant13.nsys-rep[1/1] [====27%                     ] quant13.nsys-rep[1/1] [====28%                     ] quant13.nsys-rep[1/1] [=====29%                    ] quant13.nsys-rep[1/1] [=====30%                    ] quant13.nsys-rep[1/1] [=====31%                    ] quant13.nsys-rep[1/1] [======34%                   ] quant13.nsys-rep[1/1] [======35%                   ] quant13.nsys-rep[1/1] [=======36%                  ] quant13.nsys-rep[1/1] [=======37%                  ] quant13.nsys-rep[1/1] [=======38%                  ] quant13.nsys-rep[1/1] [=======39%                  ] quant13.nsys-rep[1/1] [========40%                 ] quant13.nsys-rep[1/1] [========42%                 ] quant13.nsys-rep[1/1] [=============59%            ] quant13.nsys-rep[1/1] [==============61%           ] quant13.nsys-rep[1/1] [=================73%        ] quant13.nsys-rep[1/1] [========================100%] quant13.nsys-rep[1/1] [========================100%] quant13.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant13.nsys-rep
+Finished at: Sun Feb  1 22:24:26 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant14 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 64 --tokens 8192 --hidden-dim 3072 --fp4
+Started at: Sun Feb  1 22:24:26 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 64, Tokens: 8192, Effective tokens: 524288
+  Hidden dim: 3072, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      524288
+  Hidden dim (K):  3072
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 524288
+
+Tensor Shapes:
+  input:         [524288, 3072] bf16
+  output:        [524288, 1536] uint8
+  oscales:       [192, 524288] fp8_e4m3
+  smooth:        [3072] bf16
+  lora_down:     [3072, 64] bf16 (not used by kernel)
+  lora_act_out:  [524288, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:           3.22 GB (M x K x 2 bytes)
+  Smooth read:          6.14 KB (K x 2 bytes)
+  Output write:       805.31 MB (M_pad x K/2 bytes)
+  Scales write:       100.66 MB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:           3.22 GB
+  Total write:        905.97 MB
+  Total:                4.13 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  2.8028 ms
+  Std:   0.0215 ms
+  Min:   2.7464 ms
+  Max:   2.8511 ms
+
+Bandwidth:
+  1472.5 GB/s (18.4% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-35e0.qdstrm'
+[1/1] [0%                          ] quant14.nsys-rep[1/1] [0%                          ] quant14.nsys-rep[1/1] [0%                          ] quant14.nsys-rep[1/1] [===22%                      ] quant14.nsys-rep[1/1] [===23%                      ] quant14.nsys-rep[1/1] [===24%                      ] quant14.nsys-rep[1/1] [====25%                     ] quant14.nsys-rep[1/1] [====26%                     ] quant14.nsys-rep[1/1] [====27%                     ] quant14.nsys-rep[1/1] [====28%                     ] quant14.nsys-rep[1/1] [=====29%                    ] quant14.nsys-rep[1/1] [=====30%                    ] quant14.nsys-rep[1/1] [=====31%                    ] quant14.nsys-rep[1/1] [=====32%                    ] quant14.nsys-rep[1/1] [======33%                   ] quant14.nsys-rep[1/1] [======34%                   ] quant14.nsys-rep[1/1] [======35%                   ] quant14.nsys-rep[1/1] [=======36%                  ] quant14.nsys-rep[1/1] [=======37%                  ] quant14.nsys-rep[1/1] [=======38%                  ] quant14.nsys-rep[1/1] [=======39%                  ] quant14.nsys-rep[1/1] [========40%                 ] quant14.nsys-rep[1/1] [=========45%                ] quant14.nsys-rep[1/1] [==========47%               ] quant14.nsys-rep[1/1] [=============58%            ] quant14.nsys-rep[1/1] [==============61%           ] quant14.nsys-rep[1/1] [=================72%        ] quant14.nsys-rep[1/1] [=================73%        ] quant14.nsys-rep[1/1] [========================100%] quant14.nsys-rep[1/1] [========================100%] quant14.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant14.nsys-rep
+Finished at: Sun Feb  1 22:24:40 UTC 2026
+
+========================================
+Running: nsys profile -o quant/quant15 python scripts/profile_kernel_bandwidth.py --warmup 100 --iters 100 --batch-size 16 --tokens 4096 --hidden-dim 8192 --fp4
+Started at: Sun Feb  1 22:24:40 UTC 2026
+----------------------------------------
+Profiling quantize_w4a4_fuse_lora kernel...
+  Batch size: 16, Tokens: 4096, Effective tokens: 65536
+  Hidden dim: 8192, LoRA rank: 64
+  FP4: True, Clear L2 cache: True
+
+==========================================================================
+Quantize Kernel Memory Bandwidth Profile
+==========================================================================
+
+Configuration:
+  Tokens (M):      65536
+  Hidden dim (K):  8192
+  LoRA rank (R):   64 (NOTE: LoRA disabled in kernel)
+  Precision:       FP4 (group_size=16)
+  BLOCK_M:         256 -> M_pad = 65536
+
+Tensor Shapes:
+  input:         [65536, 8192] bf16
+  output:        [65536, 4096] uint8
+  oscales:       [512, 65536] fp8_e4m3
+  smooth:        [8192] bf16
+  lora_down:     [8192, 64] bf16 (not used by kernel)
+  lora_act_out:  [65536, 64] fp32 (not used by kernel)
+
+Memory Traffic (from kernel analysis):
+  Input read:           1.07 GB (M x K x 2 bytes)
+  Smooth read:         16.38 KB (K x 2 bytes)
+  Output write:       268.44 MB (M_pad x K/2 bytes)
+  Scales write:        33.55 MB (M_pad x K/16 x 1)
+  ------------------------------------
+  Total read:           1.07 GB
+  Total write:        301.99 MB
+  Total:                1.38 GB
+
+Timing (100 iterations, L2 cache cleared):
+  Mean:  0.9189 ms
+  Std:   0.0162 ms
+  Min:   0.8959 ms
+  Max:   1.0395 ms
+
+Bandwidth:
+  1497.2 GB/s (18.7% of 8000 GB/s peak)
+==========================================================================
+Collecting data...
+Generating '/tmp/nsys-report-7669.qdstrm'
+[1/1] [0%                          ] quant15.nsys-rep[1/1] [0%                          ] quant15.nsys-rep[1/1] [===23%                      ] quant15.nsys-rep[1/1] [===24%                      ] quant15.nsys-rep[1/1] [====26%                     ] quant15.nsys-rep[1/1] [====28%                     ] quant15.nsys-rep[1/1] [=====29%                    ] quant15.nsys-rep[1/1] [=====30%                    ] quant15.nsys-rep[1/1] [=====31%                    ] quant15.nsys-rep[1/1] [=====32%                    ] quant15.nsys-rep[1/1] [======34%                   ] quant15.nsys-rep[1/1] [======35%                   ] quant15.nsys-rep[1/1] [=======36%                  ] quant15.nsys-rep[1/1] [=======37%                  ] quant15.nsys-rep[1/1] [=======38%                  ] quant15.nsys-rep[1/1] [=======39%                  ] quant15.nsys-rep[1/1] [========40%                 ] quant15.nsys-rep[1/1] [=========46%                ] quant15.nsys-rep[1/1] [==========47%               ] quant15.nsys-rep[1/1] [============57%             ] quant15.nsys-rep[1/1] [=============58%            ] quant15.nsys-rep[1/1] [=============60%            ] quant15.nsys-rep[1/1] [================69%         ] quant15.nsys-rep[1/1] [=================74%        ] quant15.nsys-rep[1/1] [========================100%] quant15.nsys-rep[1/1] [========================100%] quant15.nsys-rep
+Generated:
+    /home/samuel/nunchaku/quant/quant15.nsys-rep
+Finished at: Sun Feb  1 22:24:56 UTC 2026
+
+All runs completed successfully.

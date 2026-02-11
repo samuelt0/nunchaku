@@ -4,8 +4,28 @@
 #include "kernels/zgemm/zgemm.h"
 #include "kernels/awq/gemv_awq.h"
 #include "kernels/awq/gemm_awq.h"
+#include "kernels/misc_kernels.h"
+#include "kernels/layernorm_kernels.h"
 
 namespace nunchaku::ops {
+
+torch::Tensor add(torch::Tensor a, torch::Tensor b) {
+    TorchOpContext ctx;
+    Tensor result = nunchaku::kernels::add(from_torch(a), from_torch(b));
+    return to_torch(result);
+}
+
+void mul_add(torch::Tensor x, torch::Tensor scale, torch::Tensor bias) {
+    TorchOpContext ctx;
+    nunchaku::kernels::mul_add(from_torch(x), from_torch(scale), from_torch(bias));
+}
+
+void layernorm(torch::Tensor out, torch::Tensor input,
+               torch::Tensor weight, torch::Tensor bias, float epsilon) {
+    TorchOpContext ctx;
+    layernorm_general(from_torch(out), from_torch(input),
+                      from_torch(weight), from_torch(bias), epsilon);
+}
 
 void gemm_w4a4(std::optional<torch::Tensor> act,            // packed act [M, K / 2]
                std::optional<torch::Tensor> wgt,            // packed act [N, K / 2]
